@@ -732,7 +732,7 @@ Key design choices:
 
 ### OptiScaler
 
-For DLSS‑style upscaling on non‑RTX hardware (GTX 1650, 1660, etc.), [OptiScaler](https://github.com/cdozdil/OptiScaler) injects FSR/XeSS into games that only support DLSS. Install as a Wine DLL override and configure per‑game.
+For DLSS‑style upscaling on non‑RTX hardware (GTX 1650, 1660, etc.), [OptiScaler](https://github.com/optiscaler/OptiScaler) injects FSR/XeSS into games that only support DLSS. Install as a Wine DLL override and configure per‑game.
 
 ### OnlineFix / cracked game support
 

@@ -8,71 +8,39 @@
 
 ## Table of Contents
 
-- 0. Target Hardware
-- 0.5 Before You Begin
 - 1. What CachyOS Already Does
-- 2. Boot Parameters
-- 3. CPU Tuning
-- 4. Memory & Swap
-- 5. Storage & Filesystems
-- 6. GPU — NVIDIA
-- 7. GPU Overclocking via LACT
-- 8. Gaming Pipeline
-- 9. Audio — PipeWire Low Latency
-- 10. Network
-- 11. System Limits & Sysctl
-- 12. Services to Disable
-- 13. Desktop & Wayland
-- 14. Minimum Viable Tuning (The 80/20)
-- 15. Verification Checklist
-- 16. System Recovery (If you break it)
-- 17. Configuration File Reference
-
-## 0. Target Hardware
-
-This guide is tuned for a **mid-range 2019-era gaming desktop**. The optimizations apply broadly to systems with:
-
-| Component | Recommended class |
-|---|---|
-| **CPU** | Intel 8th/9th/10th-gen Core i5/i7 (6+ cores, no hyperthreading on i5) |
-| **GPU** | NVIDIA GTX 1650/1660/1660 Super or RTX 2050/3050 (Turing/Ampere, 4-6GB) |
-| **RAM** | 16 GB DDR4 |
-| **Storage** | SSD primary (SATA or NVMe), optional HDD for bulk data |
-| **Display** | 1080p or 4K, 60 Hz, HDMI-connected TV or monitor |
-
-If your hardware is significantly different (more cores, AMD GPU, different display setup), most sections still apply, but the GPU overclock values, ZRAM sizing, and display calibration sections will need adjustment.
-
-## 0.5 Before You Begin
-
-**Rule #1: Don't fuck up your system without a net.**
-
-CachyOS defaults to **BTRFS** for the root partition. Use it.
-
-```
-# Create a snapshot before you touch anything
-sudo btrfs subvolume snapshot / /@pre-optimization
-
-# To roll back later (if you can't boot):
-# Boot from USB, mount your drive, rename snapshots.
-# Or just use the CachyOS bootloader menu's "Read-Only Snapshot" option if you have it.
-```
-
-**Rule #2: Test one change at a time.** Rebooting after applying the whole list is a recipe for not knowing what broke.
+- 2. Before You Begin
+- 3. Boot Parameters
+- 4. CPU Tuning
+- 5. Memory & Swap
+- 6. Storage & Filesystems
+- 7. GPU — NVIDIA
+- 8. GPU Overclocking via LACT
+- 9. Gaming Pipeline
+- 10. Audio — PipeWire Low Latency
+- 11. Network
+- 12. System Limits & Sysctl
+- 13. Services to Disable
+- 14. Desktop & Wayland
+- 15. Minimum Viable Tuning (The 80/20)
+- 16. Verification Checklist
+- 17. System Recovery (If You Break It)
+- 18. Configuration File Reference
 
 ## 1. What CachyOS Already Does
 
-CachyOS ships with aggressive performance defaults. Understanding these prevents you from double-configuring, creating conflicts, or breaking things that are already optimized.
+CachyOS ships with aggressive performance defaults. Understanding these prevents you from double‑configuring, creating conflicts, or breaking things that are already optimized.
 
 ### Kernel
 
 The `linux-cachyos` kernel includes:
 
 - **PREEMPT** (full preemption) — lower scheduling latency
-- **1000 Hz tick rate** — finer-grained scheduler decisions
-- **SCHED_EXT + BORE** — BPF-extensible scheduling with Burst-Oriented Response Enhancer
-- **Clang ThinLTO** — link-time optimization during kernel compilation
-- **x86-64-v3/v4** microarchitecture targeting
-- **NTSYNC** — kernel-level synchronization for Wine/Proton (replaces fsync/esync)
+- **1000 Hz tick rate** — finer‑grained scheduler decisions
+- **SCHED_EXT + BORE** — BPF‑extensible scheduling with Burst‑Oriented Response Enhancer
+- **Clang ThinLTO** — link‑time optimization during kernel compilation
+- **x86‑64‑v3/v4** microarchitecture targeting
+- **NTSYNC** — kernel‑level synchronization for Wine/Proton (replaces fsync/esync)
 
 If you install CachyOS with the default kernel, you already have all of this.
 
@@ -119,7 +87,7 @@ CachyOS enables THP aggressively:
 - `defrag`: `defer+madvise`
 - `khugepaged/max_ptes_none`: `409`
 
-This benefits tcmalloc-based applications (Chromium, Proton games) while the `max_ptes_none` tuning prevents the memory bloat historically associated with `always`.
+This benefits tcmalloc‑based applications (Chromium, Proton games) while the `max_ptes_none` tuning prevents the memory bloat historically associated with `always`.
 
 ### IO Schedulers
 
@@ -149,22 +117,37 @@ options nvidia NVreg_UsePageAttributeTable=1
 | DefaultLimitNOFILE (system) | 2048:2097152 |
 | DefaultLimitNOFILE (user) | 1024:1048576 |
 
-### Other Built-in Optimizations
+### Other Built‑in Optimizations
 
 - **Audio:** rtkit daemon, audio group realtime priority (`rtprio 99`), CPU DMA latency device access, snd_hda_intel power saving disabled on AC power
 - **SATA:** ALPM forced to `max_performance`
-- **HDD:** `hdparm -B 254 -S 0` — no APM spin-down
+- **HDD:** `hdparm -B 254 -S 0` — no APM spin‑down
 - **Watchdog modules:** `iTCO_wdt` and `sp5100_tco` blacklisted
 - **NTP:** Cloudflare + Google time servers
-- **DNS:** systemd-resolved
+- **DNS:** systemd‑resolved
 
 **Bottom line:** You start from a strong baseline. The remaining sections are what you add on top.
 
-## 2. Boot Parameters
+## 2. Before You Begin
+
+**Rule #1: Don't fuck up your system without a net.** CachyOS defaults to **BTRFS** for the root partition. Use it.
+
+```
+# Create a snapshot before you touch anything
+sudo btrfs subvolume snapshot / /@pre-optimization
+
+# To roll back later (if you can't boot):
+# Boot from USB, mount your drive, rename snapshots.
+# Or just use the CachyOS bootloader menu's "Read-Only Snapshot" option if you have it.
+```
+
+**Rule #2: Test one change at a time.** Rebooting after applying the whole list is a recipe for not knowing what broke.
+
+## 3. Boot Parameters
 
 CachyOS uses **Limine** as its bootloader. Parameters go in `/etc/default/limine` and get applied with `sudo limine-mkinitcpio`.
 
-If you use a different bootloader (GRUB, systemd-boot), the parameters are the same — only the configuration mechanism differs.
+If you use a different bootloader (GRUB, systemd‑boot), the parameters are the same — only the configuration mechanism differs.
 
 ### Recommended command line
 
@@ -185,32 +168,32 @@ transparent_hugepage=madvise splash rw
 | `nmi_watchdog=0` | Disable NMI watchdog specifically | Never — redundant with `nowatchdog` |
 | `nvidia_drm.modeset=1` | DRM modesetting for NVIDIA | **Required for Wayland.** Only skip if using X11 |
 | `tsc=reliable clocksource=tsc` | Force TSC as clocksource | Skip on unstable TSC hardware (rare on Intel Core) |
-| `intel_pstate=active` | Intel P-State in active mode | Skip on AMD CPUs (not applicable) |
+| `intel_pstate=active` | Intel P‑State in active mode | Skip on AMD CPUs (not applicable) |
 | `preempt=full` | Full kernel preemption | CachyOS kernel already has this compiled in, but adding it explicitly is harmless |
 | `split_lock_detect=off` | Disable split lock detection | Skip on server workloads (split lock detection catches bugs, not relevant for gaming) |
 | `pcie_aspm=performance` | Disable PCIe Active State Power Management | Skip on laptops (increases battery drain) |
 | `intel_idle.max_cstate=1` | **MODERATE** — limit CPU to C1 idle | Skip on laptops or if power consumption matters |
 | `transparent_hugepage=madvise` | THP on madvise hints only | Note: CachyOS tmpfiles overrides to `always` at runtime |
 | `splash` | Plymouth boot animation | Never — cosmetic only |
-| `rw` | Mount root read-write | Always required |
+| `rw` | Mount root read‑write | Always required |
 
 ### Security Warning: mitigations=off
 
 > **Risk level: SEVERE**
 
-Disables ALL CPU vulnerability protections: Spectre v1/v2, Meltdown, MDS, L1TF, Retbleed, SRBDS, and more. Your CPU becomes vulnerable to side-channel attacks that can leak data between processes.
+Disables ALL CPU vulnerability protections: Spectre v1/v2, Meltdown, MDS, L1TF, Retbleed, SRBDS, and more. Your CPU becomes vulnerable to side‑channel attacks that can leak data between processes.
 
-**Safe if:** This is a dedicated gaming rig used by one person, running only trusted software from known sources (Steam, official repos). The attack surface is minimal on a single-user gaming desktop.
+**Safe if:** This is a dedicated gaming rig used by one person, running only trusted software from known sources (Steam, official repos). The attack surface is minimal on a single‑user gaming desktop.
 
-**Do NOT use if:** The machine handles sensitive data, runs multi-tenant workloads, executes untrusted binaries, or serves as a server accessible from the network.
+**Do NOT use if:** The machine handles sensitive data, runs multi‑tenant workloads, executes untrusted binaries, or serves as a server accessible from the network.
 
-**Practical take:** Benchmark your games *with* and *without* `mitigations=off`. If you see a <5% gain, it's probably not worth the risk. If you see 10-15%, decide for yourself.
+**Practical take:** Benchmark your games *with* and *without* `mitigations=off`. If you see a <5% gain, it's probably not worth the risk. If you see 10‑15%, decide for yourself.
 
 ### Power/Thermal Warning: intel_idle.max_cstate=1
 
 > **Risk level: MODERATE**
 
-Prevents the CPU from entering deep sleep states (C2–C6). Eliminates wake-from-idle latency but increases idle power consumption by roughly 5–15W depending on silicon. On a desktop with adequate cooling, the thermal impact is negligible. On a laptop, this will noticeably reduce battery life.
+Prevents the CPU from entering deep sleep states (C2–C6). Eliminates wake‑from‑idle latency but increases idle power consumption by roughly 5–15 W depending on silicon. On a desktop with adequate cooling, the thermal impact is negligible. On a laptop, this will noticeably reduce battery life.
 
 ### Kernel Update Survival Guide
 
@@ -244,11 +227,11 @@ sudo limine-mkinitcpio
 sudo reboot
 ```
 
-## 3. CPU Tuning
+## 4. CPU Tuning
 
 ### Lock the governor to Performance
 
-The `performance` governor prevents the CPU from spending time in lower P-states during load, reducing frequency ramp-up latency. Three mechanisms should be used together — each covers a gap in the others:
+The `performance` governor prevents the CPU from spending time in lower P‑states during load, reducing frequency ramp‑up latency. Three mechanisms should be used together — each covers a gap in the others:
 
 **Step 1: cpupower service**
 
@@ -266,7 +249,7 @@ governor="performance"
 
 This ships with CachyOS at `/usr/lib/udev/rules.d/99-cachyos-settings.rules`. Verify it's present — it sets `performance` on CPU add events.
 
-**Step 3: tmpfiles.d (race-condition-proof)**
+**Step 3: tmpfiles.d (race‑condition‑proof)**
 
 These files apply before any desktop session starts, preventing power manager daemons from overriding the governor:
 
@@ -282,11 +265,11 @@ Create `/etc/tmpfiles.d/force-epp-performance.conf`:
 w /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference - - - - performance
 ```
 
-**Why tmpfiles.d?** `systemd-tmpfiles-setup` runs at early boot, before udev fully settles and before any user session. If a power-profiles-daemon or similar tries to change the governor later, you've already won the race.
+**Why tmpfiles.d?** `systemd-tmpfiles-setup` runs at early boot, before udev fully settles and before any user session. If a power‑profiles‑daemon or similar tries to change the governor later, you've already won the race.
 
 ### Energy Performance Preference
 
-On Intel CPUs with `intel_pstate=active` (set in boot parameters), the Energy Performance Preference controls how aggressively the CPU pursues higher P-states. Locking it to `performance` means the CPU holds its maximum frequency whenever there's any load.
+On Intel CPUs with `intel_pstate=active` (set in boot parameters), the Energy Performance Preference controls how aggressively the CPU pursues higher P‑states. Locking it to `performance` means the CPU holds its maximum frequency whenever there's any load.
 
 ### Verification
 
@@ -298,13 +281,13 @@ cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
 # → performance
 ```
 
-## 4. Memory & Swap
+## 5. Memory & Swap
 
 ### ZRAM compression: consider lz4 over zstd
 
 CachyOS defaults to `zstd` compression for ZRAM. On a CPU with limited threads (6 cores, no hyperthreading), `zstd` compression can consume measurable CPU time during heavy memory pressure.
 
-**Recommendation:** Switch to `lz4` if you have a 6-core CPU without hyperthreading or if you notice CPU spikes during memory pressure.
+**Recommendation:** Switch to `lz4` if you have a 6‑core CPU without hyperthreading or if you notice CPU spikes during memory pressure.
 
 Create `/etc/systemd/zram-generator.conf.d/override.conf`:
 
@@ -325,7 +308,7 @@ sudo systemctl restart systemd-zram-setup@zram0
 
 ### Swappiness
 
-CachyOS automatically sets `vm.swappiness = 150` via a udev rule when ZRAM activates. This high value tells the kernel to prefer swapping cold anonymous pages into ZRAM (where they're compressed in RAM) rather than dropping file cache. This is appropriate for ZRAM-backed swap.
+CachyOS automatically sets `vm.swappiness = 150` via a udev rule when ZRAM activates. This high value tells the kernel to prefer swapping cold anonymous pages into ZRAM (where they're compressed in RAM) rather than dropping file cache. This is appropriate for ZRAM‑backed swap.
 
 If you want even more aggressive ZRAM usage, set it higher in sysctl:
 
@@ -367,7 +350,7 @@ vm.dirty_ratio = 8
 
 On systems with more RAM, you may want even lower values. The goal is to keep the "dirty burst" small enough that the SSD can flush it without starving other I/O.
 
-## 5. Storage & Filesystems
+## 6. Storage & Filesystems
 
 ### XFS mount options
 
@@ -389,11 +372,11 @@ UUID=... /mount/point xfs defaults,noatime,nofail,allocsize=64m 0 0
 |---|---|---|
 | `lazytime` | Buffer atime/mtime/ctime in memory, flush opportunistically | Always on SSD root — massive metadata write reduction |
 | `noatime` | Never update access time | Always — there is almost no reason to track atime on a desktop |
-| `inode64` | Allow inodes across full 64-bit space | Required for volumes >1 TB, harmless otherwise |
-| `logbsize=256k` | Larger XFS journal buffer | SSD-only — improves metadata throughput. Default is 32k |
+| `inode64` | Allow inodes across full 64‑bit space | Required for volumes >1 TB, harmless otherwise |
+| `logbsize=256k` | Larger XFS journal buffer | SSD‑only — improves metadata throughput. Default is 32k |
 | `noquota` | Disable quota accounting | Only if you don't need filesystem quotas |
-| `allocsize=64m` | Pre-allocate 64 MB extents | HDD only — reduces fragmentation for large sequential writes (media, backups, Steam downloads) |
-| `nofail` | Boot continues if drive missing | Use for non-critical external/secondary drives |
+| `allocsize=64m` | Pre‑allocate 64 MB extents | HDD only — reduces fragmentation for large sequential writes (media, backups, Steam downloads) |
+| `nofail` | Boot continues if drive missing | Use for non‑critical external/secondary drives |
 
 ### tmpfs on /tmp
 
@@ -405,7 +388,7 @@ Places `/tmp` in RAM — reduces SSD writes and speeds up applications that use 
 
 ### F2FS for secondary/scratch SSDs
 
-If you have a second SSD used for downloads, extraction scratch space, or disposable data, consider formatting it as **F2FS** instead of ext4/XFS. F2FS is a flash-optimized filesystem that excels at sequential write workloads. It's ideal for drives where data integrity isn't critical (temp downloads, game library mirroring).
+If you have a second SSD used for downloads, extraction scratch space, or disposable data, consider formatting it as **F2FS** instead of ext4/XFS. F2FS is a flash‑optimized filesystem that excels at sequential write workloads. It's ideal for drives where data integrity isn't critical (temp downloads, game library mirroring).
 
 ```
 # Format (DESTRUCTIVE — wipes the drive)
@@ -417,9 +400,9 @@ UUID=... /mount/point f2fs defaults,noatime,nofail 0 0
 
 ### IO Scheduler — switch to ADIOS
 
-CachyOS defaults are `mq-deadline` (SATA SSD), `kyber` (NVMe), and `bfq` (HDD). For a single-user desktop with mixed workloads, **ADIOS** (Adaptive Disk I/O Scheduler — a CachyOS kernel feature) provides better all-around performance.
+CachyOS defaults are `mq-deadline` (SATA SSD), `kyber` (NVMe), and `bfq` (HDD). For a single‑user desktop with mixed workloads, **ADIOS** (Adaptive Disk I/O Scheduler — a CachyOS kernel feature) provides better all‑around performance.
 
-ADIOS uses per-CPU dispatch queues with adaptive batching. It balances throughput and latency better than mq-deadline (which can hurt latency with aggressive merges) and kyber (which targets fixed latency at the cost of throughput).
+ADIOS uses per‑CPU dispatch queues with adaptive batching. It balances throughput and latency better than mq-deadline (which can hurt latency with aggressive merges) and kyber (which targets fixed latency at the cost of throughput).
 
 Create `/etc/udev/rules.d/60-ioschedulers.rules`:
 
@@ -452,7 +435,7 @@ cat /sys/block/sdX/queue/scheduler
 
 ### NVMe Power Management (Optional)
 
-Some NVMe drives aggressively enter power-saving states, causing micro-stutters when they wake up.
+Some NVMe drives aggressively enter power‑saving states, causing micro‑stutters when they wake up.
 
 ```
 # Disable APST (Autonomous Power State Transition)
@@ -460,7 +443,7 @@ echo 0 | sudo tee /sys/class/nvme/nvme0/device/power/control
 # To make it permanent, add to a systemd service or rc.local
 ```
 
-## 6. GPU — NVIDIA
+## 7. GPU — NVIDIA
 
 ### Module parameters (CachyOS provides these)
 
@@ -482,7 +465,7 @@ sudo systemctl enable --now nvidia-persistenced
 
 ### Force Full RGB over HDMI
 
-NVIDIA defaults to Limited Range (16–235) over HDMI, causing black crush and washed-out colors on TVs and monitors. Force Full Range (0–255) RGB.
+NVIDIA defaults to Limited Range (16–235) over HDMI, causing black crush and washed‑out colors on TVs and monitors. Force Full Range (0–255) RGB.
 
 Create `/etc/X11/xorg.conf.d/20-nvidia-full-rgb.conf`:
 
@@ -505,7 +488,7 @@ sudo pkill nvidia-settings
 
 ### Environment variables
 
-Set these system-wide in `/etc/environment`:
+Set these system‑wide in `/etc/environment`:
 
 ```
 __GL_THREADED_OPTIMIZATION=1
@@ -520,22 +503,22 @@ WINEDEBUG=-all
 
 | Variable | Effect | Skip if |
 |---|---|---|
-| `__GL_THREADED_OPTIMIZATION=1` | Multi-threaded OpenGL pipeline | — |
+| `__GL_THREADED_OPTIMIZATION=1` | Multi‑threaded OpenGL pipeline | — |
 | `__GL_SHADER_DISK_CACHE=1` | Persistent compiled shader cache on disk | If disk space is extremely tight |
 | `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1` | Stop driver from purging cache periodically | — |
-| `__GL_VRR_ALLOWED=0` | Disable VRR (GSync/FreeSync) | If you use a VRR display and want tear-free |
-| `__GL_SYNC_TO_VBLANK=0` | **Disable V-Sync at driver level** | If tearing bothers you |
-| `__GL_MaxFramesAllowed=1` | Pre-rendered frames = 1 (lowest latency) | — |
+| `__GL_VRR_ALLOWED=0` | Disable VRR (GSync/FreeSync) | If you use a VRR display and want tear‑free |
+| `__GL_SYNC_TO_VBLANK=0` | **Disable V‑Sync at driver level** | If tearing bothers you |
+| `__GL_MaxFramesAllowed=1` | Pre‑rendered frames = 1 (lowest latency) | — |
 | `VK_ICD_FILENAMES` | Force NVIDIA Vulkan ICD | Only if you have multiple GPUs |
 | `WINEDEBUG=-all` | Suppress Wine debug output | If you're debugging Wine issues |
 
-### V-Sync and VRR Warning
+### V‑Sync and VRR Warning
 
 > **Risk level: MINOR (visual)**
 
 `__GL_SYNC_TO_VBLANK=0` and `__GL_VRR_ALLOWED=0` disable all synchronization. You will see screen tearing, especially below your display's refresh rate. This is a latency vs. visual quality tradeoff — uncapped, unsynchronized frames produce the lowest possible input latency.
 
-Set both to `1` if you prefer tear-free output and don't need the absolute minimum latency.
+Set both to `1` if you prefer tear‑free output and don't need the absolute minimum latency.
 
 ### NVIDIA Wayland Reality Check
 
@@ -551,7 +534,7 @@ Wayland on NVIDIA is finicky. The guide assumes `nvidia_drm.modeset=1` is enough
 - COSMIC (latest)
 - If you get a black screen or flickering, switch to X11 (`nvidia_drm.modeset=0` or just choose X11 session at login).
 
-## 7. GPU Overclocking via LACT
+## 8. GPU Overclocking via LACT
 
 [LACT](https://github.com/ilya-zlobintsev/LACT) controls NVIDIA GPUs through the NVML API. It provides a GUI for overclocking, fan curves, and monitoring.
 
@@ -559,13 +542,13 @@ Wayland on NVIDIA is finicky. The guide assumes `nvidia_drm.modeset=1` is enough
 sudo systemctl enable --now lactd
 ```
 
-### The Clock Lock Strategy (Not "Under-volting")
+### The Clock Lock Strategy (Not "Under‑volting")
 
 Modern NVIDIA GPUs (Turing and later) don't support traditional undervolting in Linux. Instead, use a **clock lock**: lock the GPU clock below the stock boost target and add a positive offset to the P8 voltage point.
 
 Why this works: The GPU runs at a higher voltage than it naturally would at that clock, eliminating power throttling while staying cooler than stock boost behavior.
 
-**For GTX 1650 / Turing-class GPUs:**
+**For GTX 1650 / Turing‑class GPUs:**
 
 | Setting | Value | Notes |
 |---|---|---|
@@ -585,7 +568,7 @@ nvidia-smi -q -d CLOCK | grep "Max Clocks"
 
 ### Fan curve
 
-Aim for quiet at idle-to-moderate loads with aggressive ramp past 70°C:
+Aim for quiet at idle‑to‑moderate loads with aggressive ramp past 70°C:
 
 | Temp | 40°C | 45°C | 60°C | 70°C | 80°C |
 |---|---|---|---|---|---|
@@ -597,7 +580,7 @@ Adjust based on your card's cooler. The goal is to stay under 75°C during exten
 
 Run a demanding game or GPU benchmark for at least 2–3 hours. If stable, run your longest typical gaming session (8+ hours). If you see artifacts, crashes, or `nvidia-smi` reporting errors, reduce the VRAM offset by 50 MHz and retest.
 
-## 8. Gaming Pipeline
+## 9. Gaming Pipeline
 
 ### Gamemode
 
@@ -640,11 +623,11 @@ Add any user who games to the gamemode group:
 sudo usermod -aG gamemode $USER
 ```
 
-This allows renice to -10 without root. Gamemode itself re-nices further (to the equivalent of -20) via its daemon privileges.
+This allows renice to -10 without root. Gamemode itself re‑nices further (to the equivalent of -20) via its daemon privileges.
 
-#### Conflict: disable ananicy-cpp
+#### Conflict: disable ananicy‑cpp
 
-CachyOS ships with `ananicy-cpp`, an automatic process priority daemon. **Disable it if you use Gamemode.** The two fight over nice values — ananicy-cpp periodically rescans and resets priorities, causing processes to bounce between levels. This manifests as microstuttering in games.
+CachyOS ships with `ananicy-cpp`, an automatic process priority daemon. **Disable it if you use Gamemode.** The two fight over nice values — ananicy‑cpp periodically rescans and resets priorities, causing processes to bounce between levels. This manifests as microstuttering in games.
 
 ```
 sudo systemctl disable --now ananicy-cpp
@@ -679,7 +662,7 @@ echo $DISPLAY
 
 ### Texture quality overrides
 
-These replicate NVIDIA Control Panel "High Quality" texture filtering at the application level — useful since NVIDIA Settings on Linux doesn't expose these controls per-game.
+These replicate NVIDIA Control Panel "High Quality" texture filtering at the application level — useful since NVIDIA Settings on Linux doesn't expose these controls per‑game.
 
 **DXVK (DirectX 9/10/11 games via Proton):**
 
@@ -696,7 +679,7 @@ __GL_LOG_ANISO=16 __GL_TEXTURE_LOD_BIAS=-0.5 SDL_VIDEODRIVER=wayland gamemoderun
 | Variable | Effect |
 |---|---|
 | `DXVK_ANISO=16` / `__GL_LOG_ANISO=16` | 16× anisotropic filtering — sharpens textures at oblique angles |
-| `DXVK_LODBIAS=-0.5` / `__GL_TEXTURE_LOD_BIAS=-0.5` | Negative LOD bias — forces higher-resolution mipmaps |
+| `DXVK_LODBIAS=-0.5` / `__GL_TEXTURE_LOD_BIAS=-0.5` | Negative LOD bias — forces higher‑resolution mipmaps |
 
 ### Gamescope — probably skip it
 
@@ -714,7 +697,7 @@ These include scheduler optimizations and Wine patches beyond Valve's upstream P
 
 ### MangoHud
 
-Minimal, data-dense overlay config at `~/.config/MangoHud/MangoHud.conf`:
+Minimal, data‑dense overlay config at `~/.config/MangoHud/MangoHud.conf`:
 
 ```
 hud_compact
@@ -743,13 +726,13 @@ wine
 Key design choices:
 
 - **No frametime graph** — it consumes massive vertical space for information you can get from the frametime number
-- **Two-column layout** (`table_columns=2`) — keeps the overlay compact
+- **Two‑column layout** (`table_columns=2`) — keeps the overlay compact
 - **Compact mode** — eliminates padding between rows
-- **Wine metrics** — shows DXVK/VKD3D version and other Proton-relevant info
+- **Wine metrics** — shows DXVK/VKD3D version and other Proton‑relevant info
 
 ### OptiScaler
 
-For DLSS-style upscaling on non-RTX hardware (GTX 1650, 1660, etc.), [OptiScaler](https://github.com/cdozdil/OptiScaler) injects FSR/XeSS into games that only support DLSS. Install as a Wine DLL override and configure per-game.
+For DLSS‑style upscaling on non‑RTX hardware (GTX 1650, 1660, etc.), [OptiScaler](https://github.com/cdozdil/OptiScaler) injects FSR/XeSS into games that only support DLSS. Install as a Wine DLL override and configure per‑game.
 
 ### OnlineFix / cracked game support
 
@@ -761,7 +744,7 @@ onlinefix64=n;winmm=n,b;steam_api64=n;version=n,b
 
 Reference: [onlinefix-linux](https://github.com/ZzEdovec/onlinefix-linux)
 
-## 9. Audio — PipeWire Low Latency
+## 10. Audio — PipeWire Low Latency
 
 ### Quantum tuning
 
@@ -783,7 +766,7 @@ context.properties = {
 | `min-quantum` | 128 | Minimum allowed block size |
 | `max-quantum` | 512 | Maximum allowed block size (~10.67 ms) |
 
-**Latency:** 128 samples / 48000 Hz ≈ 2.67 ms per cycle. Round-trip ≈ 2× this (~5.3 ms) plus hardware conversion.
+**Latency:** 128 samples / 48000 Hz ≈ 2.67 ms per cycle. Round‑trip ≈ 2× this (~5.3 ms) plus hardware conversion.
 
 **Tradeoff:** Lower quantum = lower latency but higher CPU usage for audio processing. 128 samples is appropriate for competitive gaming and rhythm games. For general desktop use (media playback, voice chat, casual gaming), 256 samples (~5.3 ms) is sufficient and uses less CPU.
 
@@ -806,11 +789,11 @@ CachyOS provides these out of the box (you don't need to configure them):
 
 - **rtkit** — grants realtime scheduling to PipeWire
 - **Audio group realtime priority** — `@audio - rtprio 99`
-- **CPU DMA latency device** — audio group can suppress CPU C-states
+- **CPU DMA latency device** — audio group can suppress CPU C‑states
 - **snd_hda_intel power saving disabled on AC** — prevents audio crackling
-- **HPET/RTC permissions** — audio group access to high-precision timers
+- **HPET/RTC permissions** — audio group access to high‑precision timers
 
-## 10. Network
+## 11. Network
 
 ### Sysctl additions
 
@@ -824,19 +807,19 @@ net.core.somaxconn = 1024
 
 | Setting | CachyOS default | Recommended | Why |
 |---|---|---|---|
-| `netdev_max_backlog` | 4096 | 16384 | Larger per-CPU packet buffer — prevents drops under burst traffic (game downloads, streaming) |
+| `netdev_max_backlog` | 4096 | 16384 | Larger per‑CPU packet buffer — prevents drops under burst traffic (game downloads, streaming) |
 | `tcp_fastopen` | 0 (off) | 3 | TCP Fast Open (client + server) — saves 1 RTT on repeat connections |
 | `somaxconn` | 4096 (kernel default) | 1024 | Tuned for desktop workloads, not servers. Prevents excessive queuing |
 
 ### CachyOS defaults you shouldn't change
 
 - **Queue discipline:** `fq_codel` — actively fights bufferbloat. Don't change this.
-- **TCP congestion:** `cubic` — standard and well-tested for Internet use.
+- **TCP congestion:** `cubic` — standard and well‑tested for Internet use.
 - **TCP keepalive:** 120 seconds — detects dead connections faster than kernel default.
 - **DNS:** `systemd-resolved` with DNSSEC validation.
 - **NTP:** Cloudflare primary, Google fallback.
 
-## 11. System Limits & Sysctl
+## 12. System Limits & Sysctl
 
 ### File descriptor limits
 
@@ -855,7 +838,7 @@ root soft nofile 524288
 
 | Setting | Value | Why |
 |---|---|---|
-| Core dumps | 0 (disabled) | Prevents crash dumps from consuming disk space. Re-enable if you're debugging crashes. |
+| Core dumps | 0 (disabled) | Prevents crash dumps from consuming disk space. Re‑enable if you're debugging crashes. |
 | nofile | 524288 | Higher than CachyOS user default (1M), appropriate for Wine/Proton |
 
 ### Full recommended sysctl
@@ -882,7 +865,7 @@ Apply:
 sudo sysctl --system
 ```
 
-## 12. Services to Disable
+## 13. Services to Disable
 
 These services are enabled by default on CachyOS but are unnecessary for a dedicated gaming desktop. Disabling them reduces background CPU usage, memory consumption, and boot time.
 
@@ -904,15 +887,15 @@ These services are enabled by default on CachyOS but are unnecessary for a dedic
 
 Mask only when you're certain the service will never be needed.
 
-## 13. Desktop & Wayland
+## 14. Desktop & Wayland
 
 ### Choosing a compositor
 
-A Wayland-native compositor that supports **fullscreen bypass** (direct scanout) is critical for gaming performance. When a game goes fullscreen, the compositor hands the display buffer directly to the GPU, eliminating the compositing step and its associated latency.
+A Wayland‑native compositor that supports **fullscreen bypass** (direct scanout) is critical for gaming performance. When a game goes fullscreen, the compositor hands the display buffer directly to the GPU, eliminating the compositing step and its associated latency.
 
 Good options:
 
-- **COSMIC** (System76, Rust-based) — actively developed, fullscreen bypass supported
+- **COSMIC** (System76, Rust‑based) — actively developed, fullscreen bypass supported
 - **KWin** (KDE Plasma) — mature, fullscreen bypass, extensive VRR support
 - **Mutter** (GNOME) — fullscreen bypass, VRR support improving
 
@@ -932,20 +915,20 @@ Without this, Wayland sessions will either fall back to software rendering or fa
 
 If your compositor already supports fullscreen bypass, you don't need Gamescope. It adds an extra compositing layer and measurable input latency. Only use it for features your compositor lacks (FSR upscaling on older GPUs, HDR tonemapping, nested Steam Deck sessions).
 
-## 14. Minimum Viable Tuning (The 80/20)
+## 15. Minimum Viable Tuning (The 80/20)
 
 Don't want to apply the entire guide? These 4 things give 90% of the performance gain with 10% of the effort.
 
 | # | Change | Command / Config |
 |---|---|---|
 | 1 | **CPU Governor** | `sudo systemctl enable --now cpupower` + `/etc/cpupower.conf` with `governor="performance"` |
-| 2 | **ZRAM → lz4** (if 6-core) | `/etc/systemd/zram-generator.conf.d/override.conf` → `compression-algorithm = lz4` |
+| 2 | **ZRAM → lz4** (if 6‑core) | `/etc/systemd/zram-generator.conf.d/override.conf` → `compression-algorithm = lz4` |
 | 3 | **Dirty Ratio** | `vm.dirty_background_ratio = 3`, `vm.dirty_ratio = 8` in sysctl |
-| 4 | **Disable ananicy-cpp** | `sudo systemctl disable --now ananicy-cpp` |
+| 4 | **Disable ananicy‑cpp** | `sudo systemctl disable --now ananicy-cpp` |
 
-If you do *only* these, you'll solve 80% of the stutter and latency issues. The rest is fine-tuning.
+If you do *only* these, you'll solve 80% of the stutter and latency issues. The rest is fine‑tuning.
 
-## 15. Verification Checklist
+## 16. Verification Checklist
 
 After applying each optimization, verify it took effect:
 
@@ -1014,7 +997,7 @@ systemctl is-active ananicy-cpp power-profiles-daemon
 # → inactive
 ```
 
-## 16. System Recovery (If you break it)
+## 17. System Recovery (If You Break It)
 
 If your system doesn't boot after changing kernel parameters:
 
@@ -1042,9 +1025,9 @@ sudo limine-mkinitcpio
 
 Alternatively, if you use BTRFS and made a snapshot (`@pre-optimization`), you can roll back from the bootloader menu (if CachyOS configured it) or rename the subvolumes from the chroot.
 
-## 17. Configuration File Reference
+## 18. Configuration File Reference
 
-Complete copy-paste-ready files. All paths are absolute from root unless noted.
+Complete copy‑paste‑ready files. All paths are absolute from root unless noted.
 
 ### /etc/default/limine (kernel command line)
 

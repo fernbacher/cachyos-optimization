@@ -1,8 +1,7 @@
 # CachyOS Performance Optimization Guide
 
-**Target hardware class:** Intel 9th-gen (i5-9400F class) + NVIDIA GTX 1650 / Turing + 16GB RAM
-**Target OS:** CachyOS (Arch Linux) with Wayland desktop
-**Kernel:** linux-cachyos — PREEMPT, 1000Hz, SCHED_EXT+BORE
+For: Intel 8th–10th gen Core i5/i7, NVIDIA Turing/Ampere, 16GB RAM, CachyOS with Wayland.
+Kernel: linux-cachyos — PREEMPT, 1000Hz, SCHED_EXT+BORE. 
 
 > A practical guide for getting the most out of mid-range gaming hardware on CachyOS. Every section explains what CachyOS already provides, what you should add on top, the exact configuration files to create, and the tradeoffs involved. Copy-paste-ready configs at the end.
 

@@ -1,5 +1,4 @@
-<!DOCTYPE html><html lang="en">
-<head>
+<!DOCTYPE html><html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CachyOS Performance Optimization Guide</title>
@@ -151,7 +150,7 @@ transparent_hugepage=madvise splash rw</code></pre><table>
   <strong>Severe: mitigations=off</strong><br>
   Disables Spectre, Meltdown, MDS, L1TF, Retbleed, SRBDS — all CPU side-channel protections. Safe on a single-user gaming rig running trusted software. Do not use on machines handling sensitive data or running untrusted code.
   <br><br>
-  <strong>Practical take:</strong> Benchmark your games <em>with</em> and <em>without</em> it. If you see <5% gain, it's probably not worth the risk.
+  <strong>Practical take:</strong> Benchmark your games <em>with</em> and <em>without</em> it. If you see &lt;5% gain, it's probably not worth the risk.
 </div><div class="warning">
   <strong>Moderate: intel_idle.max_cstate=1</strong><br>
   Prevents C2–C6 sleep states. Eliminates wake latency. Increases idle power by 5–15W. Negligible thermal impact on desktops with adequate cooling.
@@ -165,14 +164,13 @@ sudo reboot</code></pre><hr>
 <pre><code>sudo systemctl enable --now cpupower
 echo 'governor="performance"' | sudo tee /etc/cpupower.conf</code></pre><p><strong>Step 2:</strong> CachyOS udev rule at <code>/usr/lib/udev/rules.d/99-cachyos-settings.rules</code> — already there, sets performance on CPU add events.</p><p><strong>Step 3:</strong> tmpfiles.d — these run at early boot, before any desktop session. A power manager daemon can't override what was set before it started.</p><pre><code># /etc/tmpfiles.d/force-performance.conf
 w /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor - - - - performance
-
 # /etc/tmpfiles.d/force-epp-performance.conf
+
 w /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference - - - - performance</code></pre><p>Verify:</p>
 <pre><code>cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 # → performance
 cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
-# → performance</code></pre><hr>
-<p class="totop"><a href="#contents">contents</a></p><h2 id="memory">5. Memory &amp; swap</h2><h3>ZRAM: consider lz4 over zstd</h3><p>CachyOS defaults to <code>zstd</code>. On a 6-core CPU without hyperthreading, zstd compression eats measurable CPU during memory pressure. <strong>Switch to lz4 if you have fewer than 8 threads</strong> or notice CPU spikes under load.</p><pre><code># /etc/systemd/zram-generator.conf.d/override.conf
+# → performance</code></pre><hr><p class="totop"><a href="#contents">contents</a></p><h2 id="memory">5. Memory &amp; swap</h2><h3>ZRAM: consider lz4 over zstd</h3><p>CachyOS defaults to <code>zstd</code>. On a 6-core CPU without hyperthreading, zstd compression eats measurable CPU during memory pressure. <strong>Switch to lz4 if you have fewer than 8 threads</strong> or notice CPU spikes under load.</p><pre><code># /etc/systemd/zram-generator.conf.d/override.conf
 [zram0]
 compression-algorithm = lz4</code></pre><table>
   <tr><th>Algorithm</th><th>Compression speed</th><th>Decompression speed</th><th>Ratio</th></tr>
@@ -201,19 +199,21 @@ vm.dirty_ratio = 8</code></pre><table>
 <p>If you have a second SSD for downloads or temp data, F2FS excels at sequential writes. Ideal for drives where data integrity isn't critical.</p>
 <pre><code>sudo mkfs.f2fs -f /dev/sdX  # destructive — wipes the drive</code></pre><h3>IO scheduler: switch to ADIOS</h3>
 <p>CachyOS defaults: <code>mq-deadline</code> (SSD), <code>kyber</code> (NVMe), <code>bfq</code> (HDD). ADIOS (Adaptive Disk I/O Scheduler, a CachyOS kernel feature) balances throughput and latency better for single-user desktops:</p><pre><code># /etc/udev/rules.d/60-ioschedulers.rules
-
 # HDD — BFQ
-ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
-    ATTR{queue/scheduler}="bfq"
+
+ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", 
+ATTR{queue/scheduler}="bfq"
 
 # SSD — ADIOS
-ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
-    ATTR{queue/scheduler}="adios"
+
+ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", 
+ATTR{queue/scheduler}="adios"
 
 # NVMe — ADIOS
-ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
-    ATTR{queue/scheduler}="adios"</code></pre><pre><code>sudo udevadm control --reload-rules && sudo udevadm trigger</code></pre><div class="note">
-  <strong>Why ADIOS?</strong> Per-CPU dispatch queues with adaptive batching. mq-deadline merges requests aggressively, sometimes hurting latency. kyber targets fixed latency and can underutilize throughput. ADIOS adapts to the workload — better all-around for mixed read/write desktop use.
+
+ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", 
+ATTR{queue/scheduler}="adios"</code></pre><pre><code>sudo udevadm control --reload-rules && sudo udevadm trigger</code></pre><div class="note">
+<strong>Why ADIOS?</strong> Per-CPU dispatch queues with adaptive batching. mq-deadline merges requests aggressively, sometimes hurting latency. kyber targets fixed latency and can underutilize throughput. ADIOS adapts to the workload — better all-around for mixed read/write desktop use.
 </div><p><strong>NVMe APST (optional):</strong> Some NVMe drives aggressively enter power-saving states. Disable it:</p>
 <pre><code>echo 0 | sudo tee /sys/class/nvme/nvme0/device/power/control</code></pre><hr>
 <p class="totop"><a href="#contents">contents</a></p><h2 id="gpu">7. GPU — NVIDIA</h2><h3>Persistence daemon</h3>
@@ -246,7 +246,29 @@ WINEDEBUG=-all</code></pre><table>
   <tr><td><code>__GL_MaxFramesAllowed=1</code></td><td>1 pre-rendered frame (lowest latency)</td><td>—</td></tr>
   <tr><td><code>VK_ICD_FILENAMES=...</code></td><td>Force NVIDIA Vulkan ICD</td><td>Only if multiple GPUs</td></tr>
   <tr><td><code>WINEDEBUG=-all</code></td><td>Suppress Wine debug output</td><td>If debugging Wine issues</td></tr>
-</table><div class="warning">
+</table><h3 id="shader-cache">Shader Cache Size</h3>
+<p><code>__GL_SHADER_DISK_CACHE=1</code> enables the cache, but without a size limit, the driver uses its <strong>default cap of 1 GB</strong> (increased from 128 MB in driver 460). Modern titles (especially DXVK/VKD3D) can generate 2–4 GB of shaders across your library. When the cache exceeds the limit, the driver <strong>purges older entries</strong>, forcing recompilation on next launch — causing stutter and longer load times.</p>
+<p>Set a global size limit to prevent eviction:</p>
+<pre><code>mkdir -p ~/.config/environment.d
+echo "__GL_SHADER_DISK_CACHE_SIZE=4096" > ~/.config/environment.d/shader_cache.conf</code></pre>
+<p>Log out and back in, or reboot. Verify with:</p>
+<pre><code>env | grep __GL_SHADER_DISK_CACHE_SIZE</code></pre>
+<p><strong>Why 4 GB instead of 12 GB?</strong></p>
+<table>
+  <tr><th>Aspect</th><th>4 GB</th><th>12 GB</th></tr>
+  <tr><td>Cache eviction</td><td>Prevents purging for ~10–15 titles</td><td>Overkill for most libraries</td></tr>
+  <tr><td>Launch-time scan</td><td>Minimal directory traversal</td><td>Longer scan, more I/O</td></tr>
+  <tr><td>Filesystem overhead</td><td>Lower fragmentation</td><td>More fragmentation over time</td></tr>
+  <tr><td>Hit-rate ceiling</td><td>Saturated for 4 GB VRAM class</td><td>Marginal gains</td></tr>
+</table>
+<p>The GTX 1650's 4 GB VRAM bounds the shader permutation space — beyond 4 GB disk cache, you're caching permutations for games you haven't launched in months without improving current-session hit rates.</p>
+<div class="note">
+  <strong>Note:</strong> Setting <code>__GL_SHADER_DISK_CACHE_SIZE</code> globally ensures every application uses the same limit. If you set it per‑game and omit it on some launches, the driver reverts to the 1 GB default and <strong>wipes the cache</strong> when it exceeds the smaller limit.
+</div>
+<p><strong>Optional — clear legacy caches</strong> (old <code>.nv</code> path still uses 128 MB default):</p>
+<pre><code>rm -rf ~/.nv/GLCache ~/.cache/nvidia/GLCache</code></pre>
+<p>The driver will rebuild under the new XDG path (<code>~/.cache/nvidia/GLCache</code>) with the 4 GB cap applied.</p>
+<div class="warning">
   <strong>V-Sync and tearing</strong><br>
   <code>__GL_SYNC_TO_VBLANK=0</code> + <code>__GL_VRR_ALLOWED=0</code> disable all sync. You will see tearing. Uncapped unsynchronized frames have the lowest input latency. Set both to <code>1</code> if you prefer tear-free.
 </div><h3>NVIDIA Wayland reality check</h3>
@@ -275,7 +297,6 @@ WINEDEBUG=-all</code></pre><table>
 [general]
 renice = 20
 ioprio = 0
-
 [gpu]
 apply = 1
 nv_powermizer_mode = 1
@@ -306,7 +327,6 @@ end = nvidia-smi -pm 0</code></pre><table>
 <pre><code># DXVK (DirectX 9/10/11 via Proton)
 DXVK_ANISO=16 DXVK_LODBIAS=-0.5 PROTON_ENABLE_WAYLAND=1 gamemoderun %command%
 # Native OpenGL
-
 __GL_LOG_ANISO=16 __GL_TEXTURE_LOD_BIAS=-0.5 SDL_VIDEODRIVER=wayland gamemoderun %command%</code></pre>
 <table>
   <tr><th>Variable</th><th>Effect</th></tr>
@@ -324,7 +344,6 @@ font_size=14
 table_columns=2
 fps
 frametime
-
 gpu_stats
 gpu_temp
 gpu_core_clock
@@ -405,7 +424,7 @@ fs.inotify.max_user_instances = 1024</code></pre><div class="note">
 </table><div class="note">
   <strong>disable vs mask:</strong> <code>disable</code> stops auto-start but allows activation as a dependency. <code>mask</code> blocks any activation. Mask only when certain.
 </div><hr>
-<p class="totop"><a href="#contents">contents</a></p><h2 id="desktop">14. Desktop &amp; Wayland</h2><p>A Wayland compositor with <strong>fullscreen bypass</strong> (direct scanout) hands the display buffer directly to the GPU when a game goes fullscreen — no compositing step, no added latency.</p><p>Good options: COSMIC, KWin (KDE Plasma), Mutter (GNOME). All support this.</p><p><strong>NVIDIA + Wayland requires:</strong> <code>nvidia_drm.modeset=1</code> in boot parameters. Without it, Wayland sessions fall back to software rendering or fail.</p><p><strong>Reality check:</strong> If you have driver < 550.xx or a compositor without explicit sync, Wayland will be a flickery mess. Use X11.</p><p><strong>Gamescope:</strong> Skip it unless you need FSR upscaling, HDR tonemapping, or nested sessions. A native compositor with fullscreen bypass is faster.</p><hr>
+<p class="totop"><a href="#contents">contents</a></p><h2 id="desktop">14. Desktop &amp; Wayland</h2><p>A Wayland compositor with <strong>fullscreen bypass</strong> (direct scanout) hands the display buffer directly to the GPU when a game goes fullscreen — no compositing step, no added latency.</p><p>Good options: COSMIC, KWin (KDE Plasma), Mutter (GNOME). All support this.</p><p><strong>NVIDIA + Wayland requires:</strong> <code>nvidia_drm.modeset=1</code> in boot parameters. Without it, Wayland sessions fall back to software rendering or fail.</p><p><strong>Reality check:</strong> If you have driver &lt; 550.xx or a compositor without explicit sync, Wayland will be a flickery mess. Use X11.</p><p><strong>Gamescope:</strong> Skip it unless you need FSR upscaling, HDR tonemapping, or nested sessions. A native compositor with fullscreen bypass is faster.</p><hr>
 <p class="totop"><a href="#contents">contents</a></p><h2 id="minimal">15. Minimum viable tuning (The 80/20)</h2><p>Don't want to apply everything? These 4 things give 90% of the gain with 10% of the effort.</p><table>
   <tr><th>#</th><th>Change</th><th>Command / Config</th></tr>
   <tr><td>1</td><td>CPU Governor</td><td><code>sudo systemctl enable --now cpupower</code> + <code>/etc/cpupower.conf</code> with <code>governor="performance"</code></td></tr>
@@ -417,7 +436,6 @@ fs.inotify.max_user_instances = 1024</code></pre><div class="note">
 <pre><code># ── Boot ──
 cat /proc/cmdline
 # ── CPU ──
-
 cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor    # → performance
 cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference  # → performance
 
@@ -508,13 +526,12 @@ compression-algorithm = lz4</code></pre>
 ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
     ATTR{queue/scheduler}="bfq"
 # SSD — ADIOS
-
-ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", 
+ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0",
 ATTR{queue/scheduler}="adios"
 
 # NVMe — ADIOS
 
-ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", 
+ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0",
 ATTR{queue/scheduler}="adios"</code></pre>
 <p>Apply: <code>sudo udevadm control --reload-rules && sudo udevadm trigger</code></p><h3>/etc/pipewire/pipewire.conf.d/10-low-latency.conf</h3>
 <pre><code>context.properties = {
@@ -530,7 +547,6 @@ ioprio = 0
 [gpu]
 apply = 1
 nv_powermizer_mode = 1
-
 [custom]
 start = nvidia-smi -pm 1
 end = nvidia-smi -pm 0</code></pre>
@@ -554,7 +570,6 @@ font_size=14
 table_columns=2
 fps
 frametime
-
 gpu_stats
 gpu_temp
 gpu_core_clock

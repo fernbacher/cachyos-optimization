@@ -1,7 +1,7 @@
 # CachyOS Performance Optimization Guide
 
 For: Intel 8th–10th gen Core i5/i7, NVIDIA Turing/Ampere, 16GB RAM, CachyOS with Wayland.
-Kernel: linux-cachyos — PREEMPT, 1000Hz, SCHED_EXT+BORE. 
+Kernel: linux-cachyos — PREEMPT, 1000Hz, SCHED_EXT+BORE.
 
 > A practical guide for getting the most out of mid-range gaming hardware on CachyOS. Every section explains what CachyOS already provides, what you should add on top, the exact configuration files to create, and the tradeoffs involved. Copy-paste-ready configs at the end.
 
@@ -511,6 +511,44 @@ WINEDEBUG=-all
 | `VK_ICD_FILENAMES` | Force NVIDIA Vulkan ICD | Only if you have multiple GPUs |
 | `WINEDEBUG=-all` | Suppress Wine debug output | If you're debugging Wine issues |
 
+### Shader Cache Size
+
+`__GL_SHADER_DISK_CACHE=1` enables the cache, but without a size limit, the driver uses its **default cap of 1 GB** (increased from 128 MB in driver 460). Modern titles (especially DXVK/VKD3D) can generate 2–4 GB of shaders across your library. When the cache exceeds the limit, the driver **purges older entries**, forcing recompilation on next launch — causing stutter and longer load times.
+
+Set a global size limit to prevent eviction:
+
+```
+mkdir -p ~/.config/environment.d
+echo "__GL_SHADER_DISK_CACHE_SIZE=4096" > ~/.config/environment.d/shader_cache.conf
+```
+
+Log out and back in, or reboot. Verify with:
+
+```
+env | grep __GL_SHADER_DISK_CACHE_SIZE
+```
+
+**Why 4 GB instead of 12 GB?**
+
+| Aspect | 4 GB | 12 GB |
+|---|---|---|
+| Cache eviction | Prevents purging for ~10–15 titles | Overkill for most libraries |
+| Launch-time scan | Minimal directory traversal | Longer scan, more I/O |
+| Filesystem overhead | Lower fragmentation | More fragmentation over time |
+| Hit-rate ceiling | Saturated for 4 GB VRAM class | Marginal gains |
+
+The GTX 1650's 4 GB VRAM bounds the shader permutation space — beyond 4 GB disk cache, you're caching permutations for games you haven't launched in months without improving current-session hit rates.
+
+> **Note:** Setting `__GL_SHADER_DISK_CACHE_SIZE` globally ensures every application uses the same limit. If you set it per‑game and omit it on some launches, the driver reverts to the 1 GB default and **wipes the cache** when it exceeds the smaller limit.
+
+**Optional — clear legacy caches** (old `.nv` path still uses 128 MB default):
+
+```
+rm -rf ~/.nv/GLCache ~/.cache/nvidia/GLCache
+```
+
+The driver will rebuild under the new XDG path (`~/.cache/nvidia/GLCache`) with the 4 GB cap applied.
+
 ### V‑Sync and VRR Warning
 
 > **Risk level: MINOR (visual)**
@@ -527,7 +565,6 @@ Wayland on NVIDIA is finicky. The guide assumes `nvidia_drm.modeset=1` is enough
 
 - NVIDIA driver **≥ 550.xx** (check with `nvidia-smi --query-gpu=driver_version --format=csv,noheader`)
 - Compositor with **explicit sync** support:
-
 - KDE Plasma ≥ 6.1
 - GNOME ≥ 46
 - COSMIC (latest)
@@ -1001,17 +1038,19 @@ systemctl is-active ananicy-cpp power-profiles-daemon
 If your system doesn't boot after changing kernel parameters:
 
 1. **Boot from USB** (CachyOS installer ISO).
-1. **Mount your root partition**:
+2. **Mount your root partition**:
 
 ```
 mount /dev/sdXY /mnt
 mount /dev/sdXZ /mnt/boot  # if separate
 ```
+
 1. **Chroot in**:
 
 ```
 arch-chroot /mnt
 ```
+
 1. **Revert your changes**:
 
 ```
@@ -1020,6 +1059,7 @@ cp /etc/default/limine.bak /etc/default/limine
 # Or simply remove the offending parameter
 sudo limine-mkinitcpio
 ```
+
 1. **Reboot** (exit chroot, umount, reboot).
 
 Alternatively, if you use BTRFS and made a snapshot (`@pre-optimization`), you can roll back from the bootloader menu (if CachyOS configured it) or rename the subvolumes from the chroot.

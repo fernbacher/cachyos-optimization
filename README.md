@@ -913,7 +913,7 @@ These services are enabled by default on CachyOS but are unnecessary for a dedic
 | `lvm2-monitor` | `sudo systemctl mask lvm2-monitor` | Only needed if using LVM volumes |
 | `bluetooth` | `sudo systemctl disable --now bluetooth` | Disable if you don't use Bluetooth peripherals |
 | `geoclue` | `sudo systemctl disable --now geoclue` | Location services — not needed on desktop |
-| `modemmanager` | `sudo systemctl disable --now modemmanager` | Cellular modem management — irrelevant without a modem |
+| `ModemManager` | `sudo systemctl disable --now ModemManager` | Cellular modem management — irrelevant without a modem |
 | `upower` | `sudo systemctl disable --now upower` | Battery monitoring — irrelevant on desktop without UPS |
 
 **Disable vs mask:**

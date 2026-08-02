@@ -1,7 +1,7 @@
 # CachyOS Performance Optimization Guide
 
 For: Intel 8th–10th gen Core i5/i7, NVIDIA Turing/Ampere, 16GB RAM, CachyOS with Wayland.
-Kernel: linux-cachyos — PREEMPT, 1000Hz, SCHED_EXT+BORE.
+Kernel: linux-cachyos, PREEMPT, 1000Hz, EEVDF (default) + sched_ext.
 
 > A practical guide for getting the most out of mid-range gaming hardware on CachyOS. Every section explains what CachyOS already provides, what you should add on top, the exact configuration files to create, and the tradeoffs involved. Copy-paste-ready configs at the end.
 
@@ -11,20 +11,21 @@ Kernel: linux-cachyos — PREEMPT, 1000Hz, SCHED_EXT+BORE.
 - 2. Before You Begin
 - 3. Boot Parameters
 - 4. CPU Tuning
-- 5. Memory & Swap
-- 6. Storage & Filesystems
-- 7. GPU — NVIDIA
-- 8. GPU Overclocking via LACT
-- 9. Gaming Pipeline
-- 10. Audio — PipeWire Low Latency
-- 11. Network
-- 12. System Limits & Sysctl
-- 13. Services to Disable
-- 14. Desktop & Wayland
-- 15. Minimum Viable Tuning (The 80/20)
-- 16. Verification Checklist
-- 17. System Recovery (If You Break It)
-- 18. Configuration File Reference
+- 5. sched_ext: Swappable Schedulers
+- 6. Memory & Swap
+- 7. Storage & Filesystems
+- 8. GPU: NVIDIA
+- 9. GPU Overclocking via LACT
+- 10. Gaming Pipeline
+- 11. Audio: PipeWire Low Latency
+- 12. Network
+- 13. System Limits & Sysctl
+- 14. Services to Disable
+- 15. Desktop & Wayland
+- 16. Minimum Viable Tuning (The 80/20)
+- 17. Verification Checklist
+- 18. System Recovery (If You Break It)
+- 19. Configuration File Reference
 
 ## 1. What CachyOS Already Does
 
@@ -34,14 +35,17 @@ CachyOS ships with aggressive performance defaults. Understanding these prevents
 
 The `linux-cachyos` kernel includes:
 
-- **PREEMPT** (full preemption) — lower scheduling latency
-- **1000 Hz tick rate** — finer‑grained scheduler decisions
-- **SCHED_EXT + BORE** — BPF‑extensible scheduling with Burst‑Oriented Response Enhancer
-- **Clang ThinLTO** — link‑time optimization during kernel compilation
+- **PREEMPT** (full preemption), lower scheduling latency
+- **1000 Hz tick rate**, finer‑grained scheduler decisions
+- **EEVDF**, the default scheduler, not BORE (see the correction below)
+- **CONFIG_SCHED_CLASS_EXT=y**, sched_ext support, lets you load a different BPF scheduler at runtime
+- **Clang ThinLTO**, link‑time optimization during kernel compilation
 - **x86‑64‑v3/v4** microarchitecture targeting
-- **NTSYNC** — kernel‑level synchronization for Wine/Proton (replaces fsync/esync)
+- **NTSYNC**, kernel‑level synchronization for Wine/Proton (replaces fsync/esync)
 
 If you install CachyOS with the default kernel, you already have all of this.
+
+> **Scheduler correction:** `linux-cachyos` defaults to EEVDF (Earliest Eligible Virtual Deadline First, mainline's scheduler since Linux 6.6), not BORE. BORE (Burst-Oriented Response Enhancer, a fork of EEVDF tuned for burst and interactive responsiveness) ships as a separate package, `linux-cachyos-bore`. Install it and reboot if you want BORE as your always-on scheduler. What both variants share is `CONFIG_SCHED_CLASS_EXT=y`, the sched_ext framework, which is a bigger lever than picking BORE vs EEVDF at install time since it lets you swap the whole scheduler at runtime with no reboot. See [section 5](#5-sched_ext-swappable-schedulers).
 
 ### Sysctl defaults
 
@@ -102,9 +106,9 @@ options nvidia NVreg_UsePageAttributeTable=1
     NVreg_DynamicPowerManagement=0x02
 ```
 
-- **PAT=1** — faster CPU↔GPU memory transfers
-- **InitMemAlloc=0** — skips zeroing system memory before GPU use (small performance gain)
-- **DynamicPowerManagement=0x02** — runtime D3 for Turing mobile GPUs (irrelevant for desktops, harmless)
+- **PAT=1**, faster CPU↔GPU memory transfers
+- **InitMemAlloc=0**, skips zeroing system memory before GPU use (small performance gain)
+- **DynamicPowerManagement=0x02**, runtime D3 for Turing mobile GPUs (irrelevant for desktops, harmless)
 
 ### Systemd Tuning
 
@@ -120,7 +124,7 @@ options nvidia NVreg_UsePageAttributeTable=1
 
 - **Audio:** rtkit daemon, audio group realtime priority (`rtprio 99`), CPU DMA latency device access, snd_hda_intel power saving disabled on AC power
 - **SATA:** ALPM forced to `max_performance`
-- **HDD:** `hdparm -B 254 -S 0` — no APM spin‑down
+- **HDD:** `hdparm -B 254 -S 0`, no APM spin‑down
 - **Watchdog modules:** `iTCO_wdt` and `sp5100_tco` blacklisted
 - **NTP:** Cloudflare + Google time servers
 - **DNS:** systemd‑resolved
@@ -146,7 +150,7 @@ sudo btrfs subvolume snapshot / /@pre-optimization
 
 CachyOS uses **Limine** as its bootloader. Parameters go in `/etc/default/limine` and get applied with `sudo limine-mkinitcpio`.
 
-If you use a different bootloader (GRUB, systemd‑boot), the parameters are the same — only the configuration mechanism differs.
+If you use a different bootloader (GRUB, systemd‑boot), the parameters are the same, only the configuration mechanism differs.
 
 ### Recommended command line
 
@@ -161,19 +165,19 @@ transparent_hugepage=madvise splash rw
 
 | Parameter | What it does | When to skip |
 |---|---|---|
-| `quiet` | Suppress kernel log output at boot | Never — cosmetic only |
-| `mitigations=off` | **SEVERE** — disable all CPU vulnerability mitigations | Skip if this machine handles sensitive data or runs untrusted code |
-| `nowatchdog` | Disable all watchdog timers | Never — watchdog timers are unnecessary on consumer desktops |
-| `nmi_watchdog=0` | Disable NMI watchdog specifically | Never — redundant with `nowatchdog` |
+| `quiet` | Suppress kernel log output at boot | Never, cosmetic only |
+| `mitigations=off` | **SEVERE**, disable all CPU vulnerability mitigations | Skip if this machine handles sensitive data or runs untrusted code |
+| `nowatchdog` | Disable all watchdog timers | Never, watchdog timers are unnecessary on consumer desktops |
+| `nmi_watchdog=0` | Disable NMI watchdog specifically | Never, redundant with `nowatchdog` |
 | `nvidia_drm.modeset=1` | DRM modesetting for NVIDIA | **Required for Wayland.** Only skip if using X11 |
 | `tsc=reliable clocksource=tsc` | Force TSC as clocksource | Skip on unstable TSC hardware (rare on Intel Core) |
 | `intel_pstate=active` | Intel P‑State in active mode | Skip on AMD CPUs (not applicable) |
 | `preempt=full` | Full kernel preemption | CachyOS kernel already has this compiled in, but adding it explicitly is harmless |
 | `split_lock_detect=off` | Disable split lock detection | Skip on server workloads (split lock detection catches bugs, not relevant for gaming) |
 | `pcie_aspm=performance` | Disable PCIe Active State Power Management | Skip on laptops (increases battery drain) |
-| `intel_idle.max_cstate=1` | **MODERATE** — limit CPU to C1 idle | Skip on laptops or if power consumption matters |
+| `intel_idle.max_cstate=1` | **MODERATE**, limit CPU to C1 idle | Skip on laptops or if power consumption matters |
 | `transparent_hugepage=madvise` | THP on madvise hints only | Note: CachyOS tmpfiles overrides to `always` at runtime |
-| `splash` | Plymouth boot animation | Never — cosmetic only |
+| `splash` | Plymouth boot animation | Never, cosmetic only |
 | `rw` | Mount root read‑write | Always required |
 
 ### Security Warning: mitigations=off
@@ -230,7 +234,7 @@ sudo reboot
 
 ### Lock the governor to Performance
 
-The `performance` governor prevents the CPU from spending time in lower P‑states during load, reducing frequency ramp‑up latency. Three mechanisms should be used together — each covers a gap in the others:
+The `performance` governor prevents the CPU from spending time in lower P‑states during load, reducing frequency ramp‑up latency. Three mechanisms should be used together, each covers a gap in the others:
 
 **Step 1: cpupower service**
 
@@ -246,7 +250,7 @@ governor="performance"
 
 **Step 2: CachyOS udev rule**
 
-This ships with CachyOS at `/usr/lib/udev/rules.d/99-cachyos-settings.rules`. Verify it's present — it sets `performance` on CPU add events.
+This ships with CachyOS at `/usr/lib/udev/rules.d/99-cachyos-settings.rules`. Verify it's present, it sets `performance` on CPU add events.
 
 **Step 3: tmpfiles.d (race‑condition‑proof)**
 
@@ -280,7 +284,115 @@ cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
 # → performance
 ```
 
-## 5. Memory & Swap
+## 5. sched_ext: Swappable Schedulers
+
+[#5-sched_ext-swappable-schedulers](#5-sched_ext-swappable-schedulers)
+
+`linux-cachyos` ships EEVDF as its default scheduler, not BORE. See the correction in section 1. EEVDF vs BORE matters less than what actually sets CachyOS apart here: `CONFIG_SCHED_CLASS_EXT=y` is built into the default kernel, so **sched_ext (SCX)** is available from install. SCX schedulers are CPU schedulers implemented as loadable BPF programs. You can swap the whole scheduling algorithm at runtime. No reboot, no separate kernel, and you're back on EEVDF the moment you stop one.
+
+### Install
+
+[#install](#install)
+
+```
+sudo pacman -S scx-scheds scx-tools
+# scx_loader (background service, D-Bus API) and scxctl (CLI client) come with scx-tools
+```
+
+If you want the newest experimental schedulers before they land in the stable branch, use `scx-scheds-git scx-tools-git` instead.
+
+### Launching one
+
+[#launching-one](#launching-one)
+
+```
+# One-off test. Ctrl+C stops it and you're back on EEVDF.
+sudo scx_bpfland
+
+# Managed via scxctl, which talks to the scx_loader D-Bus service
+sudo systemctl enable --now scx_loader
+scxctl start --sched bpfland --mode gaming
+scxctl get                     # what's running right now
+scxctl stop                    # back to EEVDF
+```
+
+CachyOS Kernel Manager and the standalone SCX Manager GUI both wrap the same scx_loader service if you'd rather click through it than type it.
+
+### Which scheduler for this hardware
+
+[#which-scheduler-for-this-hardware](#which-scheduler-for-this-hardware)
+
+The i5-9400F is a monolithic 6-core, 6-thread die. No SMT, no heterogeneous P/E cores. That rules out most of the SMT-contention and hybrid-core-aware flags other schedulers expose, so the choice really comes down to raw interactivity under load.
+
+| Scheduler | Best for | Notes |
+| --- | --- | --- |
+| `scx_bpfland` | General desktop and gaming | vruntime-based, prioritizes interactive tasks, L2/L3-cache aware placement. Low Latency mode: `-m performance -w` |
+| `scx_cake` | Gaming specifically | Classifies threads into 4 tiers by measured runtime (input/audio, render, physics/AI, background compile) so frame-critical threads never queue behind a shader-compile job. `esports` profile drops the quantum to 1ms for competitive FPS titles |
+| `scx_lavd` | Gaming, latency-sensitive workloads | Built for gaming's latency-critical, communication-heavy pattern. `--performance` flag maximizes responsiveness. `--autopower` adjusts power mode through LAVD's Core Compaction logic, which matters more on a laptop than on this 6C/6T desktop chip |
+| `scx_flash` | Consistency under stress | EDF-based, rewards tasks that yield the CPU early. Gaming mode: `-m all` |
+| `scx_rusty` | Desktop and multimedia | The original CachyOS SCX scheduler pitch. Interactivity close to BORE without a kernel rebuild |
+
+### What actually won on this rig
+
+[#what-actually-won-on-this-rig](#what-actually-won-on-this-rig)
+
+Numbers below are from a real CS2 benchmark run on this exact machine (COSMIC/Wayland, i5-9400F, GTX 1650 at the 75W/1860MHz lock from section 9), launch options `LOW_LATENCY_LAYER=1 LOW_LATENCY_LAYER_REFLEX=1 SDL_VIDEODRIVER=wayland gamemoderun %command% -sdlaudiodriver pulse -novid`, both schedulers on their low-latency/esports profile:
+
+```
+CS2, scx_cake vs scx_lavd (lowlatency, 2 runs)
+           Avg FPS   P1 low   P99 (ms)
+cake r1      208.9    116.7      8.57
+cake r2      208.1    109.1      9.16
+cake avg     208.5    112.9      8.87
+lavd r1      208.6    108.2      9.24
+lavd r2      200.4     91.2     10.96
+lavd avg     204.5     99.7     10.10
+```
+
+`scx_cake` beat `scx_lavd` on this box, mainly on consistency: cake's 1% low stayed within about 8ms of itself across both runs, lavd's second run dropped a spike that cost it roughly 13ms of 1% low margin against cake's average. That's one bad run out of two though, not a verdict. Worth another 2 to 3 passes before writing lavd off entirely, especially since it's tuned around gaming workloads on paper and might just need a different flag set on a 6-core chip with no SMT than it gets on the hardware it's usually benchmarked on. `scx_bpfland` and `scx_cake` were the best performers overall on this setup. Your mileage may genuinely vary since SCX performance is workload- and CPU-topology-dependent. Run your own comparison with [cachyos-benchmarker](https://github.com/CachyOS/cachyos-benchmarker) and the games you actually play before locking anything in.
+
+### Autostart on boot
+
+[#autostart-on-boot](#autostart-on-boot)
+
+```
+sudo mkdir -p /etc/scx_loader
+sudo cp /usr/share/scx_loader/config.toml /etc/scx_loader/config.toml
+```
+
+```
+# /etc/scx_loader/config.toml
+default_sched = "scx_cake"
+default_mode = "Gaming"
+```
+
+```
+sudo systemctl enable --now scx_loader.service
+```
+
+Swap to bpfland for testing with `scxctl switch --sched bpfland --mode gaming`, no need to edit the config file for a quick comparison.
+
+> **power-profiles-daemon integration:** scx_loader can auto-switch scheduler profiles when you change the system power profile (Performance to Gaming mode, and so on) through a CachyOS patch to power-profiles-daemon. This guide masks `power-profiles-daemon` in section 14 so it stops fighting the locked-performance governor. If you've masked it, that auto-switch integration won't fire. Set `default_mode = "Gaming"` directly instead, or use scx_loader's `game-performance` hook so it switches automatically when Gamemode launches a game, regardless of what the power profile daemon is doing.
+
+### ananicy-cpp compatibility
+
+[#ananicy-cpp-compatibility](#ananicy-cpp-compatibility)
+
+Section 10 tells you to disable `ananicy-cpp` because it fights Gamemode's `renice` values. That's still correct and has nothing to do with sched_ext. Separately, ananicy-cpp used to cause stalls when combined with early SCX schedulers. On current scx-scheds releases the two are generally fine together. If you re-enable ananicy-cpp for other reasons and see stalls, disabling it is still the first thing to try.
+
+### Benchmarking before you commit
+
+[#benchmarking-before-you-commit](#benchmarking-before-you-commit)
+
+```
+sudo pacman -S schbench cachyos-benchmarker
+schbench -m 2 -t 8 -r 60          # wakeup and request latency percentiles
+cachyos-benchmarker ~/bench/      # full suite: compiles, encodes, hashes, renders, per-scheduler
+```
+
+Run the same test across EEVDF (default, nothing loaded), BORE if you install that variant, and 2 to 3 SCX schedulers before picking one permanently. A scheduler that wins on paper for "gaming" can still lose on your specific combination of a 6-core no-SMT budget CPU and one GPU doing all the rendering work. That's exactly what the cake vs lavd numbers above show: run it yourself, don't take a table off a forum post as gospel, including this one.
+
+## 6. Memory & Swap
 
 ### ZRAM compression: consider lz4 over zstd
 
@@ -315,7 +427,7 @@ If you want even more aggressive ZRAM usage, set it higher in sysctl:
 vm.swappiness = 180
 ```
 
-The udev rule overrides to 150 at runtime regardless — the higher value in sysctl is an expression of intent. The effective value will be 150.
+The udev rule overrides to 150 at runtime regardless, the higher value in sysctl is an expression of intent. The effective value will be 150.
 
 ### Transparent Hugepages
 
@@ -329,7 +441,7 @@ cat /sys/kernel/mm/transparent_hugepage/defrag
 # → always defer [defer+madvise] madvise never
 ```
 
-### Dirty Page Writeback — Fix desktop stuttering during large transfers
+### Dirty Page Writeback: Fix desktop stuttering during large transfers
 
 > **The problem:** Linux defaults allow up to 20% of RAM to become "dirty" (unwritten data) before throttling writes. On a 16 GB system, that's 3.2 GB. When you download or extract a large file, the kernel buffers everything in page cache, then flushes it all at once. The resulting I/O storm starves the desktop compositor, causing visible stutter and unresponsive UI.
 
@@ -349,7 +461,7 @@ vm.dirty_ratio = 8
 
 On systems with more RAM, you may want even lower values. The goal is to keep the "dirty burst" small enough that the SSD can flush it without starving other I/O.
 
-## 6. Storage & Filesystems
+## 7. Storage & Filesystems
 
 ### XFS mount options
 
@@ -369,12 +481,12 @@ UUID=... /mount/point xfs defaults,noatime,nofail,allocsize=64m 0 0
 
 | Option | Effect | When to use |
 |---|---|---|
-| `lazytime` | Buffer atime/mtime/ctime in memory, flush opportunistically | Always on SSD root — massive metadata write reduction |
-| `noatime` | Never update access time | Always — there is almost no reason to track atime on a desktop |
+| `lazytime` | Buffer atime/mtime/ctime in memory, flush opportunistically | Always on SSD root, massive metadata write reduction |
+| `noatime` | Never update access time | Always, there is almost no reason to track atime on a desktop |
 | `inode64` | Allow inodes across full 64‑bit space | Required for volumes >1 TB, harmless otherwise |
-| `logbsize=256k` | Larger XFS journal buffer | SSD‑only — improves metadata throughput. Default is 32k |
+| `logbsize=256k` | Larger XFS journal buffer | SSD‑only, improves metadata throughput. Default is 32k |
 | `noquota` | Disable quota accounting | Only if you don't need filesystem quotas |
-| `allocsize=64m` | Pre‑allocate 64 MB extents | HDD only — reduces fragmentation for large sequential writes (media, backups, Steam downloads) |
+| `allocsize=64m` | Pre‑allocate 64 MB extents | HDD only, reduces fragmentation for large sequential writes (media, backups, Steam downloads) |
 | `nofail` | Boot continues if drive missing | Use for non‑critical external/secondary drives |
 
 ### tmpfs on /tmp
@@ -383,38 +495,38 @@ UUID=... /mount/point xfs defaults,noatime,nofail,allocsize=64m 0 0
 tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
 ```
 
-Places `/tmp` in RAM — reduces SSD writes and speeds up applications that use temporary files. On a 16 GB system, the typical `/tmp` usage is negligible compared to total RAM.
+Places `/tmp` in RAM, reduces SSD writes and speeds up applications that use temporary files. On a 16 GB system, the typical `/tmp` usage is negligible compared to total RAM.
 
 ### F2FS for secondary/scratch SSDs
 
 If you have a second SSD used for downloads, extraction scratch space, or disposable data, consider formatting it as **F2FS** instead of ext4/XFS. F2FS is a flash‑optimized filesystem that excels at sequential write workloads. It's ideal for drives where data integrity isn't critical (temp downloads, game library mirroring).
 
 ```
-# Format (DESTRUCTIVE — wipes the drive)
+# Format (DESTRUCTIVE: wipes the drive)
 sudo mkfs.f2fs -f /dev/sdX
 
 # Mount
 UUID=... /mount/point f2fs defaults,noatime,nofail 0 0
 ```
 
-### IO Scheduler — switch to ADIOS
+### IO Scheduler: switch to ADIOS
 
-CachyOS defaults are `mq-deadline` (SATA SSD), `kyber` (NVMe), and `bfq` (HDD). For a single‑user desktop with mixed workloads, **ADIOS** (Adaptive Disk I/O Scheduler — a CachyOS kernel feature) provides better all‑around performance.
+CachyOS defaults are `mq-deadline` (SATA SSD), `kyber` (NVMe), and `bfq` (HDD). For a single‑user desktop with mixed workloads, **ADIOS** (Adaptive Disk I/O Scheduler, a CachyOS kernel feature) provides better all‑around performance.
 
 ADIOS uses per‑CPU dispatch queues with adaptive batching. It balances throughput and latency better than mq-deadline (which can hurt latency with aggressive merges) and kyber (which targets fixed latency at the cost of throughput).
 
 Create `/etc/udev/rules.d/60-ioschedulers.rules`:
 
 ```
-# HDD — BFQ remains the right choice
+# HDD: BFQ remains the right choice
 ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
     ATTR{queue/scheduler}="bfq"
 
-# SSD — use ADIOS instead of mq-deadline
+# SSD: use ADIOS instead of mq-deadline
 ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
     ATTR{queue/scheduler}="adios"
 
-# NVMe — use ADIOS instead of kyber
+# NVMe: use ADIOS instead of kyber
 ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
     ATTR{queue/scheduler}="adios"
 ```
@@ -442,11 +554,11 @@ echo 0 | sudo tee /sys/class/nvme/nvme0/device/power/control
 # To make it permanent, add to a systemd service or rc.local
 ```
 
-## 7. GPU — NVIDIA
+## 8. GPU: NVIDIA
 
 ### Module parameters (CachyOS provides these)
 
-You don't need to change these — they're already set by CachyOS at `/usr/lib/modprobe.d/nvidia.conf`:
+You don't need to change these, they're already set by CachyOS at `/usr/lib/modprobe.d/nvidia.conf`:
 
 ```
 options nvidia NVreg_UsePageAttributeTable=1
@@ -477,7 +589,7 @@ Section "Device"
 EndSection
 ```
 
-**Critical for TV users** — without this, dark scenes in games and movies will look crushed and gray.
+**Critical for TV users**, without this, dark scenes in games and movies will look crushed and gray.
 
 **Note:** If you have `nvidia-settings` daemon running, it might override these settings. Kill it if you see issues:
 
@@ -502,18 +614,18 @@ WINEDEBUG=-all
 
 | Variable | Effect | Skip if |
 |---|---|---|
-| `__GL_THREADED_OPTIMIZATION=1` | Multi‑threaded OpenGL pipeline | — |
+| `__GL_THREADED_OPTIMIZATION=1` | Multi‑threaded OpenGL pipeline |, |
 | `__GL_SHADER_DISK_CACHE=1` | Persistent compiled shader cache on disk | If disk space is extremely tight |
-| `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1` | Stop driver from purging cache periodically | — |
+| `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1` | Stop driver from purging cache periodically |, |
 | `__GL_VRR_ALLOWED=0` | Disable VRR (GSync/FreeSync) | If you use a VRR display and want tear‑free |
 | `__GL_SYNC_TO_VBLANK=0` | **Disable V‑Sync at driver level** | If tearing bothers you |
-| `__GL_MaxFramesAllowed=1` | Pre‑rendered frames = 1 (lowest latency) | — |
+| `__GL_MaxFramesAllowed=1` | Pre‑rendered frames = 1 (lowest latency) |, |
 | `VK_ICD_FILENAMES` | Force NVIDIA Vulkan ICD | Only if you have multiple GPUs |
 | `WINEDEBUG=-all` | Suppress Wine debug output | If you're debugging Wine issues |
 
 ### Shader Cache Size
 
-`__GL_SHADER_DISK_CACHE=1` enables the cache, but without a size limit, the driver uses its **default cap of 1 GB** (increased from 128 MB in driver 460). Modern titles (especially DXVK/VKD3D) can generate 2–4 GB of shaders across your library. When the cache exceeds the limit, the driver **purges older entries**, forcing recompilation on next launch — causing stutter and longer load times.
+`__GL_SHADER_DISK_CACHE=1` enables the cache, but without a size limit, the driver uses its **default cap of 1 GB** (increased from 128 MB in driver 460). Modern titles (especially DXVK/VKD3D) can generate 2–4 GB of shaders across your library. When the cache exceeds the limit, the driver **purges older entries**, forcing recompilation on next launch, causing stutter and longer load times.
 
 Set a global size limit to prevent eviction:
 
@@ -537,11 +649,11 @@ env | grep __GL_SHADER_DISK_CACHE_SIZE
 | Filesystem overhead | Lower fragmentation | More fragmentation over time |
 | Hit-rate ceiling | Saturated for 4 GB VRAM class | Marginal gains |
 
-The GTX 1650's 4 GB VRAM bounds the shader permutation space — beyond 4 GB disk cache, you're caching permutations for games you haven't launched in months without improving current-session hit rates.
+The GTX 1650's 4 GB VRAM bounds the shader permutation space, beyond 4 GB disk cache, you're caching permutations for games you haven't launched in months without improving current-session hit rates.
 
 > **Note:** Setting `__GL_SHADER_DISK_CACHE_SIZE` globally ensures every application uses the same limit. If you set it per‑game and omit it on some launches, the driver reverts to the 1 GB default and **wipes the cache** when it exceeds the smaller limit.
 
-**Optional — clear legacy caches** (old `.nv` path still uses 128 MB default):
+**Optional, clear legacy caches** (old `.nv` path still uses 128 MB default):
 
 ```
 rm -rf ~/.nv/GLCache ~/.cache/nvidia/GLCache
@@ -553,7 +665,7 @@ The driver will rebuild under the new XDG path (`~/.cache/nvidia/GLCache`) with 
 
 > **Risk level: MINOR (visual)**
 
-`__GL_SYNC_TO_VBLANK=0` and `__GL_VRR_ALLOWED=0` disable all synchronization. You will see screen tearing, especially below your display's refresh rate. This is a latency vs. visual quality tradeoff — uncapped, unsynchronized frames produce the lowest possible input latency.
+`__GL_SYNC_TO_VBLANK=0` and `__GL_VRR_ALLOWED=0` disable all synchronization. You will see screen tearing, especially below your display's refresh rate. This is a latency vs. visual quality tradeoff, uncapped, unsynchronized frames produce the lowest possible input latency.
 
 Set both to `1` if you prefer tear‑free output and don't need the absolute minimum latency.
 
@@ -570,7 +682,7 @@ Wayland on NVIDIA is finicky. The guide assumes `nvidia_drm.modeset=1` is enough
 - COSMIC (latest)
 - If you get a black screen or flickering, switch to X11 (`nvidia_drm.modeset=0` or just choose X11 session at login).
 
-## 8. GPU Overclocking via LACT
+## 9. GPU Overclocking via LACT
 
 [LACT](https://github.com/ilya-zlobintsev/LACT) controls NVIDIA GPUs through the NVML API. It provides a GUI for overclocking, fan curves, and monitoring.
 
@@ -588,7 +700,7 @@ Why this works: The GPU runs at a higher voltage than it naturally would at that
 
 | Setting | Value | Notes |
 |---|---|---|
-| Power Limit | Max (75W for GTX 1650) | Your GPU's maximum — check with `nvidia-smi -q -d POWER` |
+| Power Limit | Max (75W for GTX 1650) | Your GPU's maximum, check with `nvidia-smi -q -d POWER` |
 | GPU Min Clock | 300 MHz | Stock minimum |
 | GPU Max Clock | ~100 MHz below stock boost | For GTX 1650: 1860 MHz (stock boost ~1905–1935 MHz) |
 | GPU Offset (P8) | +100 MHz | Raises voltage at the locked clock |
@@ -600,7 +712,7 @@ Why this works: The GPU runs at a higher voltage than it naturally would at that
 nvidia-smi -q -d CLOCK | grep "Max Clocks"
 ```
 
-**For other GPUs:** Lock your max clock ~50–100 MHz below the stock boost target. The offset depends on silicon quality — start at +50 MHz and test.
+**For other GPUs:** Lock your max clock ~50–100 MHz below the stock boost target. The offset depends on silicon quality, start at +50 MHz and test.
 
 ### Fan curve
 
@@ -616,7 +728,7 @@ Adjust based on your card's cooler. The goal is to stay under 75°C during exten
 
 Run a demanding game or GPU benchmark for at least 2–3 hours. If stable, run your longest typical gaming session (8+ hours). If you see artifacts, crashes, or `nvidia-smi` reporting errors, reduce the VRAM offset by 50 MHz and retest.
 
-## 9. Gaming Pipeline
+## 10. Gaming Pipeline
 
 ### Gamemode
 
@@ -663,7 +775,7 @@ This allows renice to -10 without root. Gamemode itself re‑nices further (to t
 
 #### Conflict: disable ananicy‑cpp
 
-CachyOS ships with `ananicy-cpp`, an automatic process priority daemon. **Disable it if you use Gamemode.** The two fight over nice values — ananicy‑cpp periodically rescans and resets priorities, causing processes to bounce between levels. This manifests as microstuttering in games.
+CachyOS ships with `ananicy-cpp`, an automatic process priority daemon. **Disable it if you use Gamemode.** The two fight over nice values, ananicy‑cpp periodically rescans and resets priorities, causing processes to bounce between levels. This manifests as microstuttering in games.
 
 ```
 sudo systemctl disable --now ananicy-cpp
@@ -698,7 +810,7 @@ echo $DISPLAY
 
 ### Texture quality overrides
 
-These replicate NVIDIA Control Panel "High Quality" texture filtering at the application level — useful since NVIDIA Settings on Linux doesn't expose these controls per‑game.
+These replicate NVIDIA Control Panel "High Quality" texture filtering at the application level, useful since NVIDIA Settings on Linux doesn't expose these controls per‑game.
 
 **DXVK (DirectX 9/10/11 games via Proton):**
 
@@ -714,10 +826,10 @@ __GL_LOG_ANISO=16 __GL_TEXTURE_LOD_BIAS=-0.5 SDL_VIDEODRIVER=wayland gamemoderun
 
 | Variable | Effect |
 |---|---|
-| `DXVK_ANISO=16` / `__GL_LOG_ANISO=16` | 16× anisotropic filtering — sharpens textures at oblique angles |
-| `DXVK_LODBIAS=-0.5` / `__GL_TEXTURE_LOD_BIAS=-0.5` | Negative LOD bias — forces higher‑resolution mipmaps |
+| `DXVK_ANISO=16` / `__GL_LOG_ANISO=16` | 16× anisotropic filtering, sharpens textures at oblique angles |
+| `DXVK_LODBIAS=-0.5` / `__GL_TEXTURE_LOD_BIAS=-0.5` | Negative LOD bias, forces higher‑resolution mipmaps |
 
-### Gamescope — probably skip it
+### Gamescope: probably skip it
 
 [Gamescope](https://github.com/ValveSoftware/gamescope) is Valve's microcompositor. It adds a compositing layer between the game and your display. On a native Wayland compositor that already supports fullscreen bypass (COSMIC, KWin, Mutter), Gamescope adds input latency without benefit. Only use it if you need its specific features (FSR upscaling, HDR tonemapping, nested sessions).
 
@@ -761,10 +873,10 @@ wine
 
 Key design choices:
 
-- **No frametime graph** — it consumes massive vertical space for information you can get from the frametime number
-- **Two‑column layout** (`table_columns=2`) — keeps the overlay compact
-- **Compact mode** — eliminates padding between rows
-- **Wine metrics** — shows DXVK/VKD3D version and other Proton‑relevant info
+- **No frametime graph**, it consumes massive vertical space for information you can get from the frametime number
+- **Two‑column layout** (`table_columns=2`), keeps the overlay compact
+- **Compact mode**, eliminates padding between rows
+- **Wine metrics**, shows DXVK/VKD3D version and other Proton‑relevant info
 
 ### OptiScaler
 
@@ -780,7 +892,7 @@ onlinefix64=n;winmm=n,b;steam_api64=n;version=n,b
 
 Reference: [onlinefix-linux](https://github.com/ZzEdovec/onlinefix-linux)
 
-## 10. Audio — PipeWire Low Latency
+## 11. Audio: PipeWire Low Latency
 
 ### Quantum tuning
 
@@ -823,13 +935,13 @@ pw-top
 
 CachyOS provides these out of the box (you don't need to configure them):
 
-- **rtkit** — grants realtime scheduling to PipeWire
-- **Audio group realtime priority** — `@audio - rtprio 99`
-- **CPU DMA latency device** — audio group can suppress CPU C‑states
-- **snd_hda_intel power saving disabled on AC** — prevents audio crackling
-- **HPET/RTC permissions** — audio group access to high‑precision timers
+- **rtkit**, grants realtime scheduling to PipeWire
+- **Audio group realtime priority**, `@audio - rtprio 99`
+- **CPU DMA latency device**, audio group can suppress CPU C‑states
+- **snd_hda_intel power saving disabled on AC**, prevents audio crackling
+- **HPET/RTC permissions**, audio group access to high‑precision timers
 
-## 11. Network
+## 12. Network
 
 ### Sysctl additions
 
@@ -843,19 +955,19 @@ net.core.somaxconn = 1024
 
 | Setting | CachyOS default | Recommended | Why |
 |---|---|---|---|
-| `netdev_max_backlog` | 4096 | 16384 | Larger per‑CPU packet buffer — prevents drops under burst traffic (game downloads, streaming) |
-| `tcp_fastopen` | 0 (off) | 3 | TCP Fast Open (client + server) — saves 1 RTT on repeat connections |
+| `netdev_max_backlog` | 4096 | 16384 | Larger per‑CPU packet buffer, prevents drops under burst traffic (game downloads, streaming) |
+| `tcp_fastopen` | 0 (off) | 3 | TCP Fast Open (client + server), saves 1 RTT on repeat connections |
 | `somaxconn` | 4096 (kernel default) | 1024 | Tuned for desktop workloads, not servers. Prevents excessive queuing |
 
 ### CachyOS defaults you shouldn't change
 
-- **Queue discipline:** `fq_codel` — actively fights bufferbloat. Don't change this.
-- **TCP congestion:** `cubic` — standard and well‑tested for Internet use.
-- **TCP keepalive:** 120 seconds — detects dead connections faster than kernel default.
+- **Queue discipline:** `fq_codel`, actively fights bufferbloat. Don't change this.
+- **TCP congestion:** `cubic`, standard and well‑tested for Internet use.
+- **TCP keepalive:** 120 seconds, detects dead connections faster than kernel default.
 - **DNS:** `systemd-resolved` with DNSSEC validation.
 - **NTP:** Cloudflare primary, Google fallback.
 
-## 12. System Limits & Sysctl
+## 13. System Limits & Sysctl
 
 ### File descriptor limits
 
@@ -893,7 +1005,7 @@ fs.inotify.max_user_watches = 524288
 fs.inotify.max_user_instances = 1024
 ```
 
-> **Note on swappiness:** You set it to 180, but CachyOS ZRAM udev rule overrides to 150 at runtime. The high value signals intent — aggressively push cold anonymous pages to ZRAM. The effective runtime value (150) is already 2.5× the kernel default of 60.
+> **Note on swappiness:** You set it to 180, but CachyOS ZRAM udev rule overrides to 150 at runtime. The high value signals intent, aggressively push cold anonymous pages to ZRAM. The effective runtime value (150) is already 2.5× the kernel default of 60.
 
 Apply:
 
@@ -901,29 +1013,29 @@ Apply:
 sudo sysctl --system
 ```
 
-## 13. Services to Disable
+## 14. Services to Disable
 
 These services are enabled by default on CachyOS but are unnecessary for a dedicated gaming desktop. Disabling them reduces background CPU usage, memory consumption, and boot time.
 
 | Service | How | Why |
 |---|---|---|
-| `ananicy-cpp` | `sudo systemctl disable --now ananicy-cpp` | Conflicts with Gamemode — causes microstuttering |
+| `ananicy-cpp` | `sudo systemctl disable --now ananicy-cpp` | Conflicts with Gamemode, causes microstuttering |
 | `power-profiles-daemon` | `sudo systemctl mask power-profiles-daemon` | Overrides manual CPU governor settings |
 | `NetworkManager-wait-online` | `sudo systemctl disable NetworkManager-wait-online` | Unnecessary boot delay on desktop |
 | `lvm2-monitor` | `sudo systemctl mask lvm2-monitor` | Only needed if using LVM volumes |
 | `bluetooth` | `sudo systemctl disable --now bluetooth` | Disable if you don't use Bluetooth peripherals |
-| `geoclue` | `sudo systemctl disable --now geoclue` | Location services — not needed on desktop |
-| `ModemManager` | `sudo systemctl disable --now ModemManager` | Cellular modem management — irrelevant without a modem |
-| `upower` | `sudo systemctl disable --now upower` | Battery monitoring — irrelevant on desktop without UPS |
+| `geoclue` | `sudo systemctl disable --now geoclue` | Location services, not needed on desktop |
+| `ModemManager` | `sudo systemctl disable --now ModemManager` | Cellular modem management, irrelevant without a modem |
+| `upower` | `sudo systemctl disable --now upower` | Battery monitoring, irrelevant on desktop without UPS |
 
 **Disable vs mask:**
 
-- `disable` — service won't start automatically but can be started as a dependency
-- `mask` — service cannot be started at all, even as a dependency of another service
+- `disable`, service won't start automatically but can be started as a dependency
+- `mask`, service cannot be started at all, even as a dependency of another service
 
 Mask only when you're certain the service will never be needed.
 
-## 14. Desktop & Wayland
+## 15. Desktop & Wayland
 
 ### Choosing a compositor
 
@@ -931,9 +1043,9 @@ A Wayland‑native compositor that supports **fullscreen bypass** (direct scanou
 
 Good options:
 
-- **COSMIC** (System76, Rust‑based) — actively developed, fullscreen bypass supported
-- **KWin** (KDE Plasma) — mature, fullscreen bypass, extensive VRR support
-- **Mutter** (GNOME) — fullscreen bypass, VRR support improving
+- **COSMIC** (System76, Rust‑based), actively developed, fullscreen bypass supported
+- **KWin** (KDE Plasma), mature, fullscreen bypass, extensive VRR support
+- **Mutter** (GNOME), fullscreen bypass, VRR support improving
 
 ### NVIDIA + Wayland
 
@@ -945,13 +1057,13 @@ nvidia_drm.modeset=1
 
 Without this, Wayland sessions will either fall back to software rendering or fail to start.
 
-**Reality check:** If you have driver < 550.xx or a compositor without explicit sync, Wayland will be a flickery mess. Don't fight it — use X11.
+**Reality check:** If you have driver < 550.xx or a compositor without explicit sync, Wayland will be a flickery mess. Don't fight it, use X11.
 
 ### Gamescope
 
 If your compositor already supports fullscreen bypass, you don't need Gamescope. It adds an extra compositing layer and measurable input latency. Only use it for features your compositor lacks (FSR upscaling on older GPUs, HDR tonemapping, nested Steam Deck sessions).
 
-## 15. Minimum Viable Tuning (The 80/20)
+## 16. Minimum Viable Tuning (The 80/20)
 
 Don't want to apply the entire guide? These 4 things give 90% of the performance gain with 10% of the effort.
 
@@ -964,7 +1076,7 @@ Don't want to apply the entire guide? These 4 things give 90% of the performance
 
 If you do *only* these, you'll solve 80% of the stutter and latency issues. The rest is fine‑tuning.
 
-## 16. Verification Checklist
+## 17. Verification Checklist
 
 After applying each optimization, verify it took effect:
 
@@ -984,6 +1096,15 @@ zcat /proc/config.gz | grep CONFIG_PREEMPT
 
 zcat /proc/config.gz | grep CONFIG_HZ=
 # → CONFIG_HZ=1000
+
+zcat /proc/config.gz | grep CONFIG_SCHED_CLASS_EXT
+# → =y
+
+uname -r
+# "-bore" in the string = BORE kernel, otherwise EEVDF
+
+scxctl get
+# → currently loaded SCX scheduler, or "none" for EEVDF/BORE
 
 # ── Memory ──
 zramctl
@@ -1033,7 +1154,7 @@ systemctl is-active ananicy-cpp power-profiles-daemon
 # → inactive
 ```
 
-## 17. System Recovery (If You Break It)
+## 18. System Recovery (If You Break It)
 
 If your system doesn't boot after changing kernel parameters:
 
@@ -1064,7 +1185,7 @@ sudo limine-mkinitcpio
 
 Alternatively, if you use BTRFS and made a snapshot (`@pre-optimization`), you can roll back from the bootloader menu (if CachyOS configured it) or rename the subvolumes from the chroot.
 
-## 18. Configuration File Reference
+## 19. Configuration File Reference
 
 Complete copy‑paste‑ready files. All paths are absolute from root unless noted.
 
@@ -1075,6 +1196,15 @@ KERNEL_CMDLINE[default]+="quiet mitigations=off nowatchdog nmi_watchdog=0 nvidia
 ```
 
 Apply: `sudo limine-mkinitcpio`
+
+### /etc/scx_loader/config.toml
+
+```
+default_sched = "scx_cake"
+default_mode = "Gaming"
+```
+
+Apply: `sudo systemctl enable --now scx_loader.service`
 
 ### /etc/tmpfiles.d/force-performance.conf
 
@@ -1146,15 +1276,15 @@ Apply: `sudo systemctl restart systemd-zram-setup@zram0`
 ### /etc/udev/rules.d/60-ioschedulers.rules
 
 ```
-# HDD — use BFQ
+# HDD: use BFQ
 ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
     ATTR{queue/scheduler}="bfq"
 
-# SSD — use ADIOS
+# SSD: use ADIOS
 ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
     ATTR{queue/scheduler}="adios"
 
-# NVMe — use ADIOS
+# NVMe: use ADIOS
 ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
     ATTR{queue/scheduler}="adios"
 ```
@@ -1201,7 +1331,7 @@ Section "Device"
 EndSection
 ```
 
-### /etc/fstab (example — replace UUIDs)
+### /etc/fstab (example: replace UUIDs)
 
 ```
 UUID=<boot-uuid>  /boot  vfat  defaults,umask=0077  0 2

@@ -615,7 +615,7 @@ WINEDEBUG=-all
 | Variable | Effect | Skip if |
 |---|---|---|
 | `__GL_THREADED_OPTIMIZATION=1` | Multi‑threaded OpenGL pipeline |, |
-| `__GL_SHADER_DISK_CACHE=1` | Persistent compiled shader cache on disk | If disk space is extremely tight |
+| `__GL_SHADER_DISK_CACHE=1` | Persistent compiled  on disk | If disk space is extremely tight |
 | `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1` | Stop driver from purging cache periodically |, |
 | `__GL_VRR_ALLOWED=0` | Disable VRR (GSync/FreeSync) | If you use a VRR display and want tear‑free |
 | `__GL_SYNC_TO_VBLANK=0` | **Disable V‑Sync at driver level** | If tearing bothers you |
@@ -631,7 +631,7 @@ Set a global size limit to prevent eviction:
 
 ```
 mkdir -p ~/.config/environment.d
-echo "__GL_SHADER_DISK_CACHE_SIZE=4096" > ~/.config/environment.d/shader_cache.conf
+echo "__GL_SHADER_DISK_CACHE_SIZE=12000000000" > ~/.config/environment.d/shader_cache.conf
 ```
 
 Log out and back in, or reboot. Verify with:
@@ -639,17 +639,6 @@ Log out and back in, or reboot. Verify with:
 ```
 env | grep __GL_SHADER_DISK_CACHE_SIZE
 ```
-
-**Why 4 GB instead of 12 GB?**
-
-| Aspect | 4 GB | 12 GB |
-|---|---|---|
-| Cache eviction | Prevents purging for ~10–15 titles | Overkill for most libraries |
-| Launch-time scan | Minimal directory traversal | Longer scan, more I/O |
-| Filesystem overhead | Lower fragmentation | More fragmentation over time |
-| Hit-rate ceiling | Saturated for 4 GB VRAM class | Marginal gains |
-
-The GTX 1650's 4 GB VRAM bounds the shader permutation space, beyond 4 GB disk cache, you're caching permutations for games you haven't launched in months without improving current-session hit rates.
 
 > **Note:** Setting `__GL_SHADER_DISK_CACHE_SIZE` globally ensures every application uses the same limit. If you set it per‑game and omit it on some launches, the driver reverts to the 1 GB default and **wipes the cache** when it exceeds the smaller limit.
 

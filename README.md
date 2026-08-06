@@ -248,11 +248,7 @@ Create `/etc/cpupower.conf` if it doesn't exist:
 governor="performance"
 ```
 
-**Step 2: CachyOS udev rule**
-
-This ships with CachyOS at `/usr/lib/udev/rules.d/99-cachyos-settings.rules`. Verify it's present, it sets `performance` on CPU add events.
-
-**Step 3: tmpfiles.d (race‑condition‑proof)**
+**Step 2: tmpfiles.d (race‑condition‑proof)**
 
 These files apply before any desktop session starts, preventing power manager daemons from overriding the governor:
 

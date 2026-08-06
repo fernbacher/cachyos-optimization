@@ -296,17 +296,9 @@ WINEDEBUG=-all</code></pre><table>
 <p><code>__GL_SHADER_DISK_CACHE=1</code> enables the cache, but without a size limit, the driver uses its <strong>default cap of 1 GB</strong> (increased from 128 MB in driver 460). Modern titles (especially DXVK/VKD3D) can generate 2–4 GB of shaders across your library. When the cache exceeds the limit, the driver <strong>purges older entries</strong>, forcing recompilation on next launch, causing stutter and longer load times.</p>
 <p>Set a global size limit to prevent eviction:</p>
 <pre><code>mkdir -p ~/.config/environment.d
-echo "__GL_SHADER_DISK_CACHE_SIZE=4096" > ~/.config/environment.d/shader_cache.conf</code></pre>
+echo "__GL_SHADER_DISK_CACHE_SIZE=12000000000" > ~/.config/environment.d/shader_cache.conf</code></pre>
 <p>Log out and back in, or reboot. Verify with:</p>
 <pre><code>env | grep __GL_SHADER_DISK_CACHE_SIZE</code></pre>
-<p><strong>Why 4 GB instead of 12 GB?</strong></p>
-<table>
-  <tr><th>Aspect</th><th>4 GB</th><th>12 GB</th></tr>
-  <tr><td>Cache eviction</td><td>Prevents purging for ~10–15 titles</td><td>Overkill for most libraries</td></tr>
-  <tr><td>Launch-time scan</td><td>Minimal directory traversal</td><td>Longer scan, more I/O</td></tr>
-  <tr><td>Filesystem overhead</td><td>Lower fragmentation</td><td>More fragmentation over time</td></tr>
-  <tr><td>Hit-rate ceiling</td><td>Saturated for 4 GB VRAM class</td><td>Marginal gains</td></tr>
-</table>
 <p>The GTX 1650's 4 GB VRAM bounds the shader permutation space. Beyond 4 GB disk cache, you're caching permutations for games you haven't launched in months without improving current-session hit rates.</p>
 <div class="note">
   <strong>Note:</strong> Setting <code>__GL_SHADER_DISK_CACHE_SIZE</code> globally ensures every application uses the same limit. If you set it per‑game and omit it on some launches, the driver reverts to the 1 GB default and <strong>wipes the cache</strong> when it exceeds the smaller limit.

@@ -180,7 +180,7 @@ sudo limine-mkinitcpio
 sudo reboot</code></pre><hr>
 <p class="totop"><a href="#contents">contents</a></p><h2 id="cpu">4. CPU tuning</h2><p>Lock the governor to <code>performance</code> using three mechanisms; each covers gaps in the others.</p><p><strong>Step 1:</strong> cpupower service</p>
 <pre><code>sudo systemctl enable --now cpupower
-echo 'governor="performance"' | sudo tee /etc/cpupower.conf</code></pre><p><strong>Step 2:</strong> CachyOS udev rule at <code>/usr/lib/udev/rules.d/99-cachyos-settings.rules</code>, already there, sets performance on CPU add events.</p><p><strong>Step 3:</strong> tmpfiles.d: these run at early boot, before any desktop session. A power manager daemon can't override what was set before it started.</p><pre><code># /etc/tmpfiles.d/force-performance.conf
+echo 'governor="performance"' | sudo tee /etc/cpupower.conf</code></pre><p><strong>Step 2:</strong> tmpfiles.d: these run at early boot, before any desktop session. A power manager daemon can't override what was set before it started.</p><pre><code># /etc/tmpfiles.d/force-performance.conf
 w /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor - - - - performance
 # /etc/tmpfiles.d/force-epp-performance.conf
 

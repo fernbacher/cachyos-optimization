@@ -1177,7 +1177,7 @@ Complete copy‑paste‑ready files. All paths are absolute from root unless not
 ### /etc/default/limine (kernel command line)
 
 ```
-KERNEL_CMDLINE[default]+="quiet mitigations=off nowatchdog nmi_watchdog=0 nvidia_drm.modeset=1 tsc=reliable clocksource=tsc intel_pstate=active preempt=full split_lock_detect=off pcie_aspm=performance intel_idle.max_cstate=1 transparent_hugepage=madvise splash rw root=UUID=..."
+KERNEL_CMDLINE[default]+="quiet mitigations=off nowatchdog nmi_watchdog=0 nvidia_drm.modeset=1 tsc=reliable clocksource=tsc intel_pstate=active preempt=full split_lock_detect=off pcie_aspm.policy=performance intel_idle.max_cstate=1 transparent_hugepage=madvise splash rw root=UUID=..."
 ```
 
 Apply: `sudo limine-mkinitcpio`

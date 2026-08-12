@@ -157,7 +157,7 @@ If you use a different bootloader (GRUB, systemd‑boot), the parameters are the
 ```
 quiet mitigations=off nowatchdog nmi_watchdog=0 nvidia_drm.modeset=1
 tsc=reliable clocksource=tsc intel_pstate=active preempt=full
-split_lock_detect=off pcie_aspm=performance intel_idle.max_cstate=1
+split_lock_detect=off pcie_aspm.policy=performance intel_idle.max_cstate=1
 transparent_hugepage=madvise splash rw
 ```
 
@@ -174,7 +174,7 @@ transparent_hugepage=madvise splash rw
 | `intel_pstate=active` | Intel P‑State in active mode | Skip on AMD CPUs (not applicable) |
 | `preempt=full` | Full kernel preemption | CachyOS kernel already has this compiled in, but adding it explicitly is harmless |
 | `split_lock_detect=off` | Disable split lock detection | Skip on server workloads (split lock detection catches bugs, not relevant for gaming) |
-| `pcie_aspm=performance` | Disable PCIe Active State Power Management | Skip on laptops (increases battery drain) |
+| `pcie_aspm.policy=performance` | Disable PCIe Active State Power Management | Skip on laptops (increases battery drain) |
 | `intel_idle.max_cstate=1` | **MODERATE**, limit CPU to C1 idle | Skip on laptops or if power consumption matters |
 | `transparent_hugepage=madvise` | THP on madvise hints only | Note: CachyOS tmpfiles overrides to `always` at runtime |
 | `splash` | Plymouth boot animation | Never, cosmetic only |

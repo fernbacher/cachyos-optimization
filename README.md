@@ -830,38 +830,93 @@ These include scheduler optimizations and Wine patches beyond Valve's upstream P
 
 ### MangoHud
 
-Minimal, data‑dense overlay config at `~/.config/MangoHud/MangoHud.conf`:
+Data‑dense overlay config at `~/.config/MangoHud/MangoHud.conf`:
 
 ```
-hud_compact
-hud_no_margin
-text_outline
-background_alpha=0.3
-font_size=14
-table_columns=2
+########################################
+# Fernbacher CachyOS - MangoHud
+########################################
 
-fps
-frametime
+# ─── Layout ──────────────────────────
+
+legacy_layout=false
+position=top-left
+
+table_columns=3
+
+font_size=22
+font_size_secondary=14
+
+background_color=000000
+background_alpha=0.42
+
+round_corners=12
+
+text_outline
+text_outline_thickness=1.5
+
+hud_compact
+
+
+# ─── GPU ─────────────────────────────
 
 gpu_stats
 gpu_temp
 gpu_core_clock
-gpu_mem_clock
+gpu_power
+
+gpu_color=FF4444
+
+
+# ─── VRAM ────────────────────────────
+
 vram
+gpu_mem_clock
+gpu_mem_temp
+
+vram_color=FF4444
+
+
+# ─── CPU ─────────────────────────────
 
 cpu_stats
 cpu_temp
 cpu_mhz
+cpu_power
 
-wine
+core_load
+core_bars
+
+cpu_color=FF8C00
+
+
+# ─── RAM ─────────────────────────────
+
+ram
+
+ram_color=FF8C00
+
+
+# ─── FPS / Frametime ─────────────────
+
+fps
+fps_metrics=avg,0.01
+
+frametime
+frame_timing
+
+frametime_color=FF8C00
+
+
+# ─── Runtime ─────────────────────────
+
+gamemode
+resolution
+display_server
+vulkan_driver
+
+time
 ```
-
-Key design choices:
-
-- **No frametime graph**, it consumes massive vertical space for information you can get from the frametime number
-- **Two‑column layout** (`table_columns=2`), keeps the overlay compact
-- **Compact mode**, eliminates padding between rows
-- **Wine metrics**, shows DXVK/VKD3D version and other Proton‑relevant info
 
 ### OptiScaler
 

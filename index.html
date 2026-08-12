@@ -261,7 +261,7 @@ ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0",
 ATTR{queue/scheduler}="adios"</code></pre><pre><code>sudo udevadm control --reload-rules && sudo udevadm trigger</code></pre><div class="note">
 <strong>Why ADIOS?</strong> Per-CPU dispatch queues with adaptive batching. mq-deadline merges requests aggressively, sometimes hurting latency. kyber targets fixed latency and can underutilize throughput. ADIOS adapts to the workload, better all-around for mixed read/write desktop use.
 </div><p><strong>NVMe APST (optional):</strong> Some NVMe drives aggressively enter power-saving states. Disable it:</p>
-<pre><code>echo 0 | sudo tee /sys/class/nvme/nvme0/device/power/control</code></pre><hr>
+<pre><code>echo on | sudo tee /sys/class/nvme/nvme0/device/power/control</code></pre><hr>
 <p class="totop"><a href="#contents">contents</a></p><h2 id="gpu">8. GPU: NVIDIA</h2><h3>Persistence daemon</h3>
 <pre><code>sudo systemctl enable --now nvidia-persistenced</code></pre>
 <p>Keeps driver loaded with no apps using GPU. Kills the ~1–3s init delay on first launch after boot.</p><h3>Full RGB over HDMI</h3>

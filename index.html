@@ -152,7 +152,7 @@ fs.file-max = 2097152</code></pre><h3>ZRAM</h3>
 <p class="totop"><a href="#contents">contents</a></p><h2 id="boot">3. Boot parameters</h2><p>CachyOS uses <strong>Limine</strong>. Parameters go in <code>/etc/default/limine</code> and apply with <code>sudo limine-mkinitcpio</code>. If you use GRUB or systemd-boot the parameters are identical; only where you put them differs.</p><h3>Recommended command line</h3>
 <pre><code>quiet mitigations=off nowatchdog nmi_watchdog=0 nvidia_drm.modeset=1
 tsc=reliable clocksource=tsc intel_pstate=active preempt=full
-split_lock_detect=off pcie_aspm=performance intel_idle.max_cstate=1
+split_lock_detect=off pcie_aspm.policy=performance intel_idle.max_cstate=1
 transparent_hugepage=madvise splash rw</code></pre><table>
   <tr><th>Parameter</th><th>Effect</th><th>Skip if</th></tr>
   <tr><td><code>mitigations=off</code></td><td>Disable all CPU vulnerability mitigations</td><td>Machine handles sensitive data or untrusted code</td></tr>

@@ -546,7 +546,7 @@ Some NVMe drives aggressively enter power‑saving states, causing micro‑stutt
 
 ```
 # Disable APST (Autonomous Power State Transition)
-echo 0 | sudo tee /sys/class/nvme/nvme0/device/power/control
+echo on | sudo tee /sys/class/nvme/nvme0/device/power/control
 # To make it permanent, add to a systemd service or rc.local
 ```
 

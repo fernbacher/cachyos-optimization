@@ -162,7 +162,7 @@ transparent_hugepage=madvise splash rw</code></pre><table>
   <tr><td><code>intel_pstate=active</code></td><td>Intel P-State active mode</td><td>AMD CPU</td></tr>
   <tr><td><code>preempt=full</code></td><td>Full kernel preemption</td><td>Already in CachyOS kernel; adding anyway is harmless</td></tr>
   <tr><td><code>split_lock_detect=off</code></td><td>Disable split lock detection</td><td>Server workloads</td></tr>
-  <tr><td><code>pcie_aspm=performance</code></td><td>Disable PCIe power management</td><td>Laptops (battery impact)</td></tr>
+  <tr><td><code>pcie_aspm.policy=performance</code></td><td>Disable PCIe power management</td><td>Laptops (battery impact)</td></tr>
   <tr><td><code>intel_idle.max_cstate=1</code></td><td>Limit CPU to C1 idle state</td><td>Laptops or power-sensitive machines</td></tr>
 </table><div class="warning">
   <strong>Severe: mitigations=off</strong><br>
@@ -531,7 +531,7 @@ systemctl is-active ananicy-cpp power-profiles-daemon  # → inactive</code></pr
 </ol>
 <p>Alternatively, if you used BTRFS snapshots (<code>@pre-optimization</code>), roll back from the bootloader menu or rename subvolumes from the chroot.</p><hr>
 <p class="totop"><a href="#contents">contents</a></p><h2 id="configs">19. Configuration file reference</h2><p>All paths absolute from <code>/</code> unless noted. Create these files, apply, reboot.</p><h3>/etc/default/limine</h3>
-<pre><code>KERNEL_CMDLINE[default]+="quiet mitigations=off nowatchdog nmi_watchdog=0 nvidia_drm.modeset=1 tsc=reliable clocksource=tsc intel_pstate=active preempt=full split_lock_detect=off pcie_aspm=performance intel_idle.max_cstate=1 transparent_hugepage=madvise splash rw root=UUID=..."</code></pre>
+<pre><code>KERNEL_CMDLINE[default]+="quiet mitigations=off nowatchdog nmi_watchdog=0 nvidia_drm.modeset=1 tsc=reliable clocksource=tsc intel_pstate=active preempt=full split_lock_detect=off pcie_aspm.policy=performance intel_idle.max_cstate=1 transparent_hugepage=madvise splash rw root=UUID=..."</code></pre>
 <p>Apply: <code>sudo limine-mkinitcpio && sudo reboot</code></p><h3>/etc/scx_loader/config.toml</h3>
 <pre><code>default_sched = "scx_bpfland"
 default_mode = "Gaming"</code></pre>

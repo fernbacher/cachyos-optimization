@@ -228,6 +228,20 @@ vm.dirty_ratio = 8</code></pre><table>
   <tr><th>Parameter</th><th>Kernel default</th><th>Recommended</th><th>Effect</th></tr>
   <tr><td><code>vm.dirty_background_ratio</code></td><td>10</td><td>3</td><td>Start flushing at ~500MB dirty (16GB RAM)</td></tr>
   <tr><td><code>vm.dirty_ratio</code></td><td>20</td><td>8</td><td>Throttle writes at ~1.3GB dirty</td></tr>
+  <h3>ZRAM Swap Priority</h3>
+<p>CachyOS defaults ZRAM swap priority to 100 (or 150 via udev). Bumping it to 200 guarantees the kernel exhausts compressed RAM before touching physical storage. This prevents I/O queue contention between swap writes and game asset streaming, which is critical for SATA SSDs.</p>
+
+<pre><code># /etc/systemd/zram-generator.conf.d/override.conf
+[zram0]
+compression-algorithm = lz4
+swap-priority = 200</code></pre>
+
+<p>Apply the changes:</p>
+<pre><code>sudo systemctl daemon-reload
+sudo systemctl restart dev-zram0.swap</code></pre>
+
+<p>Verify it is active (the PRIO column should now read 200):</p>
+<pre><code>swapon --show</code></pre>
 </table><hr>
 <p class="totop"><a href="#contents">contents</a></p><h2 id="storage">7. Storage &amp; filesystems</h2><h3>XFS mount options</h3><p><strong>SSD root:</strong></p>
 <pre><code>UUID=... / xfs defaults,lazytime,noatime,inode64,logbsize=256k,noquota 0 1</code></pre><p><strong>HDD bulk storage:</strong></p>

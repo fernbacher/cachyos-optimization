@@ -413,6 +413,32 @@ Apply:
 sudo systemctl restart systemd-zram-setup@zram0
 ```
 
+ZRAM Swap Priority
+CachyOS defaults ZRAM swap priority to 100 (or 150 via udev). Bumping it to 200 guarantees the kernel exhausts compressed RAM before touching physical storage. This prevents I/O queue contention between swap writes and game asset streaming, which is critical for SATA SSDs.
+
+Edit your ZRAM generator override file:
+```bash
+sudo nano /etc/systemd/zram-generator.conf.d/override.conf
+```
+
+Add `swap-priority = 200` under your `[zram0]` block:
+```ini
+[zram0]
+compression-algorithm = lz4
+swap-priority = 200
+```
+
+Apply the changes:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart dev-zram0.swap
+```
+
+Verify it is active (the `PRIO` column should now read `200`):
+```bash
+swapon --show
+```
+
 ### Swappiness
 
 CachyOS automatically sets `vm.swappiness = 150` via a udev rule when ZRAM activates. This high value tells the kernel to prefer swapping cold anonymous pages into ZRAM (where they're compressed in RAM) rather than dropping file cache. This is appropriate for ZRAM‑backed swap.

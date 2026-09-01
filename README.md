@@ -1432,3 +1432,8 @@ cpu_mhz
 
 wine
 ```
+
+Copyright (c) 2026 Fernbacher
+
+This project is licensed under the AAAPL license.
+See the LICENSE file for the complete terms.

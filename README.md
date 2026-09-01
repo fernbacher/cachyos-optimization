@@ -1433,7 +1433,11 @@ cpu_mhz
 wine
 ```
 
-Copyright (c) 2026 Fernbacher
+## License
 
-This project is licensed under the AAAPL license.
-See the LICENSE file for the complete terms.
+This project is available under the Anti-AI Public-Domain-Style License,
+Version 1.0. It permits unrestricted non-AI use but prohibits AI training,
+evaluation, dataset creation, AI-powered services, and related uses.
+
+This is a custom source-available license and is not an OSI-approved
+open-source license.

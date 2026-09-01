@@ -1,103 +1,60 @@
-# AAAPL — Anti American AI Public License
+ANTI-AI PUBLIC-DOMAIN-STYLE LICENSE
+Version 1.0
 
 Copyright (c) 2026 Fernbacher Dieter Sorin Claudiu
 
-## MIT License
+Permission is granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, subject to the following restriction:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+1. PROHIBITED AI USE
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+The Software may not be used, in whole or in part, for:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+a. training, fine-tuning, pretraining, evaluating, benchmarking, or testing
+   any artificial-intelligence, machine-learning, generative-AI, or large
+   language model system;
 
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+b. creating, improving, validating, or supplying data, datasets, embeddings,
+   prompts, responses, or other material for such systems;
 
-## Additional Terms
+c. generating code, documentation, configurations, datasets, or other
+   derivative material intended to replace, reproduce, or substantially
+   imitate the Software;
 
-### 1. Incorporation and License Integrity
+d. operating the Software as part of an AI service, automated coding system,
+   model-training pipeline, inference system, or AI-powered hosted service;
 
-The MIT License text above is included as part of this single license instrument, not as a separate license grant. The phrases "without restriction" and "to permit persons to whom the Software is furnished to do so" in the MIT License text are expressly qualified by, and may be exercised only subject to, these Additional Terms. No person may separate, excerpt, republish, or rely on the MIT License text as an independent grant apart from this full License. All permissions granted under the MIT License text above are granted only subject to this License in its entirety, including these Additional Terms. These Additional Terms are conditions of every copyright permission granted under this License. No recipient may use, copy, modify, merge, publish, distribute, sublicense, sell, host, process, or otherwise exploit the Covered Software except under this License as a whole. Any attempt to offer, sublicense, relicense, distribute, or make available the Covered Software under the MIT License alone, or under any term that omits, narrows, waives, replaces, contradicts, or conflicts with these Additional Terms, is void and grants no rights.
+e. scraping, indexing, ingesting, or analyzing the Software for any of the
+   purposes listed above.
 
-### 2. Definitions
+This restriction applies whether the AI-related use is commercial or
+non-commercial and whether the use is performed directly or through a
+third party.
 
-"Covered Software" means the Software, any copy or portion of the Software, and any modification, derivative work, adaptation, translation, refactoring, reimplementation, restatement, port, replacement, compiled version, object-code version, minified version, obfuscated version, containerized version, hosted instance, dataset entry, embedding, vector representation, index, prompt, retrieval source, benchmark item, or other material that contains, is based on, is derived from, is generated from, is extracted from, or incorporates any material part of the Software. Covered Software includes reimplementation, port, replacement, or restatement substantially derived from, or materially informed by access to, review of, or use of, the structure, sequence, organization, logic, design, schema, interface, or expressive content of the Software, even if a different programming language, architecture, formatting, naming, or surface expression is used, to the maximum extent permitted by law. For embeddings, vector representations, indexes, prompts, retrieval sources, benchmarks, model artifacts, outputs, and similar materials, coverage applies to the extent such material contains, encodes, preserves, reproduces, is substantially derived from, or is used as a substitute for expressive content of the Software. Incidental, remote, or de minimis relationships do not by themselves create Covered Software.
+2. OTHER USES
 
-"AI/ML System" means any artificial intelligence system, machine learning system, neural network, foundation model, large language model, generative model, agent, model, service, platform, application, feature, pipeline, retrieval system, embedding system, automated code-analysis system, automated code-generation system, or substantially similar computational or statistical system. AI/ML System does not include deterministic developer tools, including without limitation compilers, linkers, linters, formatters, build tools, version-control systems, regular-expression search, or deterministic static-analysis tools, that do not perform statistical inference, model training, generative output, semantic embedding, or neural-network processing. Incidental non-model heuristics or non-adaptive ranking do not by themselves make a tool an AI/ML System absent learned or statistical inference materially affecting outputs.
+Except for the prohibited AI uses above, the Software may be used, copied,
+modified, published, distributed, sublicensed, and sold without restriction.
 
-"Licensor" means each copyright holder of the Software or any person or entity that offers Covered Software under this License.
+3. NOTICE
 
-"Restricted Person" means any natural person, legal person, entity, organization, agency, instrumentality, affiliate, subsidiary, parent, successor, assignee, contractor, subcontractor, agent, nominee, trustee, or person coordinating to evade or facilitate evasion of this License that satisfies any of the following:
+Copies or substantial portions of the Software must include this license and
+the copyright notice above.
 
-1. is organized, incorporated, registered, domiciled, resident, headquartered, principally managed, or principally operating in or under the laws of the United States of America or the State of Israel;
+4. TERMINATION
 
-2. is a citizen, national, permanent resident, or lawful resident of the United States of America or the State of Israel;
+Any permission granted by this license terminates automatically upon a
+violation of Section 1. Rights may be reinstated if the violation is cured
+within thirty days after written notice from the copyright holder.
 
-3. is directly or indirectly owned, controlled, majority-owned, beneficially owned, directed, managed, or materially influenced by any person described in paragraph 1 or 2, including where such person holds at least twenty-five percent (25%) of equity, voting power, beneficial ownership, profit interest, governance rights, veto rights, appointment rights, or rights to direct AI/ML, software, data, product, security, or technical decisions;
+5. DISCLAIMER
 
-4. directly or indirectly owns, controls, majority-owns, beneficially owns, directs, manages, or materially influences any person described in paragraph 1, 2, or 3, using the same thresholds and rights described in paragraph 3;
-
-5. has in any position with authority over AI/ML, software, data, product, security, technical roadmap, licensing, or compliance decisions any person described in paragraph 1 or 2, including without limitation any director, officer, senior manager, general partner, managing member, chief executive, chief operating officer, chief financial officer, chief technology officer, chief information officer, chief data officer, chief AI officer, chief scientist, principal researcher, or substantially equivalent position;
-
-6. within the preceding sixty (60) months materially performs, has materially performed, bids for, receives material funding or compensation from, supplies material goods or services to, contracts with, subcontracts for, provides material support to, receives material consideration from, or otherwise undertakes material business for or on behalf of the government, military, defense department, armed forces, intelligence agency, security agency, surveillance agency, law-enforcement agency, national-security body, or defense, military, intelligence, security, surveillance, law-enforcement, or national-security contractor or subcontractor of the United States of America or the State of Israel.
-
-Passive ownership solely through a diversified index fund, mutual fund, exchange-traded fund, custodian, broker, depositary, or other non-controlling passive investment vehicle does not by itself make a person a Restricted Person, unless such arrangement is used to evade this License or is accompanied by actual control, direction, board observer rights, advisory rights, governance rights, technical direction, material influence, or Restricted Use. Ordinary employment, ordinary consumer use, ordinary sales of generally available goods or services, or de minimis commercial dealings do not by themselves create Restricted Person status absent material decision-making authority, approval rights, practical control, material influence, or Restricted Use.
-
-"Control" includes direct or indirect power, by ownership, contract, funding, governance right, veto right, appointment right, board observer right, advisory right, technical dependency, business dependency, or otherwise, to direct, restrain, approve, materially influence, or benefit from the management, policies, operations, technical roadmap, data use, product use, or disposition of a person or entity. Control is presumed where a person holds at least twenty-five percent (25%) of equity, voting power, beneficial ownership, profit interest, board-appointment rights, veto rights, or contractual rights over AI/ML, software, data, product, security, technical, licensing, or compliance decisions.
-
-"Restricted AI Use" means any of the following acts involving Covered Software, in whole or in part, directly or indirectly:
-
-1. training, fine-tuning, aligning, evaluating, validating, testing, improving, developing, deploying, commercializing, operating, or otherwise using any AI/ML System with, on, using, or in connection with Covered Software;
-
-2. using, copying, accessing, processing, incorporating, transforming, adapting, compiling, analyzing, indexing, embedding, caching, logging, or otherwise exploiting Covered Software for or in connection with any AI/ML System;
-
-3. including, embedding, exposing, providing, reproducing, distributing, transmitting, serving, making available, or otherwise using Covered Software as source code, training material, reference material, retrieval content, prompt content, generated content, product content, product component, service component, dataset, corpus, benchmark, input material, output material, or evaluation material of or for any AI/ML System;
-
-4. submitting, uploading, transmitting, exposing, indexing, embedding, caching, logging, processing, analyzing, inferring on, transforming, or otherwise making Covered Software available to any hosted model, coding assistant, retrieval system, embedding service, evaluation service, data-labeling service, cloud platform, contractor, subcontractor, API provider, or other third-party system or service, whether or not such third party retains, trains on, logs, reviews, caches, or claims not to use the submitted material; or
-
-5. creating, retaining, using, distributing, sublicensing, commercializing, or making available any dataset, corpus, benchmark, prompt set, retrieval index, embedding, vector database, model, checkpoint, adapter, weight, fine-tune, distillation, evaluation result, synthetic data, generated output, product component, or other artifact created by, incorporating, trained on, fine-tuned on, evaluated against, prompted with, retrieved from, substantially derived from, or otherwise derived from Covered Software.
-
-"Restricted Use" means any Restricted AI Use by a Restricted Person; any Restricted AI Use for, on behalf of, at the known direction or express instruction of, under funding from, under control of, for delivery to, or for the substantial benefit of a Restricted Person, including where a Restricted Person is a known, intended, probable, reasonably foreseeable, or commercially targeted recipient, customer, integration target, acquirer, licensee, user, or beneficiary; any preparatory, enabling, staging, conversion, cleaning, summarization, indexing, embedding, evaluation, or routing act undertaken with knowledge or reason to know that Covered Software will be used in a Restricted AI Use; and any attempt to cause, enable, assist, procure, outsource, route, conceal, or facilitate any such activity.
-
-"Restricted Artifacts" means any dataset, corpus, benchmark, prompt set, retrieval index, embedding, vector database, model, checkpoint, adapter, weight, fine-tune, distillation, evaluation result, synthetic data, generated output, product component, or other artifact created through or for a Restricted Use by, incorporating, trained on, fine-tuned on, evaluated against, prompted with, retrieved from, substantially derived from, or otherwise derived from Covered Software, to the extent such artifact contains, encodes, preserves, reproduces, is substantially derived from, is used as a substitute for expressive content of the Software, or materially preserves, implements, enables, emulates, operationalizes, or extracts protected capabilities, behavior, decision rules, representations, or learned parameters from Covered Software, regardless of human-readable expression.
-
-### 3. Prohibited Uses
-
-No person may engage in a Restricted Use. Access, receipt, possession, retention, internal evaluation, internal testing, or internal processing for a Restricted Use is itself a Restricted Use. No Restricted Person may access, possess, receive, use, copy, modify, merge, publish, distribute, sublicense, sell, host, process, or otherwise exploit Covered Software for any Restricted Use. A person that becomes a Restricted Person after obtaining Covered Software may not continue any access, retention, use, exploitation, service access, cached copy, backup, descendant, or related Restricted Artifact for or in connection with any Restricted Use. A person is responsible for Restricted Uses performed by its affiliates, agents, contractors, subcontractors, service providers, customers, users, systems, or any other person acting on its behalf, at its direction, under its control, or for its benefit.
-
-### 4. Closed-Source, Modified, and Hosted Uses
-
-The restrictions in this License apply regardless of whether Covered Software is used publicly or privately, in source or object form, modified or unmodified, alone or combined with other material, and regardless of whether source code is disclosed. Closing source, withholding source, changing file names, removing notices, compiling, minifying, obfuscating, translating, restructuring, refactoring, wrapping, containerizing, hosting, or incorporating Covered Software into another product, service, repository, dataset, model training input, prompt input, retrieval input, or system does not remove or reduce these restrictions. Claimed clean-room, other-language, or replacement implementation does not avoid this License where the implementation is materially informed by access to, review of, or use of Covered Software. Translation includes conversion into another programming language, formal language, intermediate representation, schema, rule set, or executable logic form. Making functionality of Covered Software available through a hosted service, API, internal platform, cloud service, agent, model, application, or other network-accessible system is use of Covered Software and remains subject to all Restricted Use limitations.
-
-### 5. Redistribution, Notices, and Contributions
-
-Any sublicense or redistribution must be no broader than the rights granted by this License and must include these Additional Terms in full. Every copy, substantial portion, distribution, package, repository, container image, binary, build artifact, dataset, model training input, prompt input, retrieval input, documentation set, or product component containing Covered Software must include the copyright notice, the MIT License text, and these Additional Terms in full. Modified versions must carry a prominent notice identifying that they contain or are based on Covered Software and remain subject to this License. Notices may not be removed, hidden, altered, contradicted, or separated from Covered Software in a manner that would mislead recipients about the applicability of these Additional Terms. SPDX identifiers, package manifests, repository metadata, registry metadata, model cards, data cards, API documentation, service terms, and other machine-readable or human-readable license fields must identify this License as LicenseRef-AAAPL or Anti American AI Public License, and must not identify Covered Software as MIT, MIT-only, or unrestricted. A distributor must use commercially reasonable efforts to correct inaccurate package, registry, repository, model-card, data-card, API, or service metadata; any conflicting metadata is non-authoritative, void, and grants no rights.
-
-By intentionally submitting, publishing, or contributing a modification of Covered Software to the Licensor, an upstream repository, or a public fork, the contributor licenses that contribution under this License and represents that the contributor has authority to do so. No contribution, fork, patch, pull request, merge request, release, modified version, package metadata, repository notice, end-user license agreement, terms of service, or downstream license file may impose terms that remove, weaken, or conflict with these Additional Terms. Hosted services, APIs, model cards, data cards, documentation, service terms, access tokens, SDKs, hosted endpoints, API routes, plug-ins, integrations, and service credentials that expose, provide, process, or materially derive from Covered Software or Restricted Artifacts must conspicuously display or link to this License and are treated as exercises of rights requiring notice for purposes of this Section.
-
-### 6. No Circumvention and Third-Party Services
-
-No person may avoid, evade, or circumvent this License through any affiliate, intermediary, nominee, proxy, contractor, subcontractor, customer, reseller, cloud provider, hosted service, corporate restructuring, jurisdictional arrangement, technical arrangement, contractual arrangement, or other direct or indirect means. No person may use any non-Restricted Person, third-party service, AI/ML System, hosted model, coding assistant, retrieval system, embedding service, evaluation service, data-labeling service, cloud platform, contractor, subcontractor, API provider, or other intermediary to do indirectly what this License prohibits directly. This prohibition applies regardless of whether an intermediary claims independent status, no retention, no training, no logging, no review, transient processing only, or separation from a Restricted Person, where the Restricted Person is a known, intended, probable, reasonably foreseeable, or commercially targeted recipient, customer, integration target, acquirer, licensee, user, or beneficiary. No intermediary or reseller safe harbor exists where a person develops, fine-tunes, hosts, evaluates, brokers, resells, integrates, transfers, or provides access to any output, model, service, system, or artifact with knowledge or reason to know that a Restricted Person is such a downstream recipient or beneficiary. This includes submissions to external AI/ML services to produce outputs, models, services, systems, or artifacts for such restricted beneficiaries regardless of retention, training, logging, review, caching, transient-processing, or contract terms.
-
-### 7. No Rights in Restricted Artifacts
-
-No rights are granted under this License in any Restricted Artifacts. No person may use this License as a defense, authorization, permission, waiver, or estoppel for any Restricted Artifact. To the maximum extent permitted by law, and to the extent described in the definition of Restricted Artifacts, Restricted Artifacts may not be used, copied, modified, hosted, distributed, sublicensed, sold, commercialized, retained, or made available. Nothing in this License admits that any Restricted Artifact is independently lawful.
-
-### 8. Termination
-
-Upon any Restricted Use or other breach of this License, all rights granted to the breaching person under this License terminate automatically and immediately. The breaching person must immediately cease all use, copying, modification, publication, distribution, sublicensing, sale, access, hosting, processing, and commercialization of Covered Software, and must, to the maximum extent technically feasible and legally permitted, permanently delete or destroy all copies, modifications, derivatives, datasets, embeddings, vector stores, prompts, retrieval indexes, model artifacts, weights, checkpoints, adapters, outputs, logs, caches, backups, product materials, Restricted Artifacts, and downstream materials created from, incorporating, or affected by Covered Software through the breach. Materials that cannot be deleted because of mandatory legal retention duties must be isolated, access-restricted, excluded from all use, processing, training, distribution, commercialization, and product operations, and deleted when the retention duty ends. If separation is technically infeasible, the entire affected artifact, product, service, system, or dataset must cease being used, hosted, distributed, sold, or made available. The breaching person must make commercially reasonable efforts to notify downstream recipients of affected materials and to stop further use or distribution. Termination does not legalize prior conduct, cure infringement, waive remedies, or grant rights in any artifact created through breach. Rights may be reinstated only by the Licensor's express written permission after cure, if any, in the Licensor's sole discretion.
-
-### 9. Severability
-
-If any provision of these Additional Terms is held invalid or unenforceable, it shall be limited, narrowed, or severed only to the minimum extent necessary, and the remaining provisions shall remain in full force and effect. The prohibited acts and covered categories are intended to be enforced to the maximum lawful extent, including by narrowing any overbroad application to the closest lawful construction consistent with this License's protective purpose.
-
-### 10. Acceptance
-
-By receiving, possessing, retaining, copying, modifying, merging, publishing, distributing, sublicensing, selling, hosting, deploying, accessing, processing, training on, evaluating against, or otherwise exercising any permission with respect to Covered Software, a person accepts this License in its entirety, including these Additional Terms. A person that does not accept this License has no permission to exercise any rights granted by the MIT License text above.
-
-### 11. Governing Law and Forum
-
-Unless the Licensor specifies a different governing law or forum in a conspicuous or express repository notice, this License is governed by the laws of the People's Republic of China, excluding conflict-of-law rules. Any dispute arising from or relating to this License shall be submitted to the competent courts at the Licensor's principal place of residence or business; if the Licensor has no such place in the People's Republic of China or it cannot reasonably be determined, the dispute shall be submitted to the competent courts in Beijing, People's Republic of China, unless applicable law requires otherwise.
-
-### 12. Governing Language
-
-AAAPL.md is the authoritative bilingual reference version of this License. AAAPL.en.md and AAAPL.zh.md are enforceable single-language convenience versions to the extent they accurately reproduce the corresponding English or Chinese text of AAAPL.md. Differences in title presentation, bilingual pairing, paragraph splitting, or line wrapping do not by themselves create a conflict if the substantive corresponding language text is accurately reproduced. In case of conflict between English and Chinese text, the English text controls unless the Licensor expressly states otherwise in a conspicuous or express repository notice.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF,
+OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
